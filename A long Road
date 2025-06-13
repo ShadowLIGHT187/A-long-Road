@@ -9,6 +9,8 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
+local Drawing = Drawing or getgenv().Drawing
+
 
 -- MAIN UI
 local gui = Instance.new("ScreenGui", game.CoreGui)
@@ -211,14 +213,65 @@ do
     Toggle(f,"Box ESP (Players)",false,y,function(v) boxESP=v end); y=y+21
     Toggle(f,"Zombie ESP",false,y,function(v) zombESP=v end); y=y+21
     Toggle(f,"Vehicle ESP",false,y,function(v) vehESP=v end); y=y+21
-    Slider(f,"ESP Distance",50,3000,1500,y,function(v) espDist=v end); y=y+22
+    Slider(f,"ESP Distance",50,3000,1500,y,function(v) espDist=v end); y=y+21
+    local snaplineESP = false
+Toggle(f,"Snapline ESP (Players)",false,y,function(v) snaplineESP = v end); y = y + 21
+
+
+
 
     local boxHandles,zombieHandles,vehHandles = {},{},{}
     local function clear(t) for _,h in pairs(t) do if h and h.Parent then h:Destroy() end end; table.clear(t) end
     local function dist(pos) local c=player.Character and player.Character:FindFirstChild("HumanoidRootPart") if c then return (c.Position-pos).Magnitude end return math.huge end
 
     RunService.RenderStepped:Connect(function()
+        local function clear(t)
+    for _,h in pairs(t) do
+        if typeof(h) == "Instance" and h.Parent then
+            h:Destroy()
+        elseif typeof(h) == "table" and h.Remove then
+            h:Remove()
+        elseif typeof(h) == "userdata" and h.Destroy then
+            h:Destroy()
+        end
+    end
+    table.clear(t)
+end
+
+RunService.RenderStepped:Connect(function()
+    -- ESP Cleanups
+    clear(boxHandles)
+    clear(zombieHandles)
+    clear(vehHandles)
+    clear(snaplines)
+
+    -- ... your existing Box, Zombie, Vehicle ESP drawing ...
+
+    -- Snapline ESP (Players)
+    if snaplineESP then
+        for _,pl in pairs(Players:GetPlayers()) do
+            if pl ~= player and pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
+                local p = pl.Character.HumanoidRootPart
+                if dist(p.Position) <= espDist then
+                    local screenPos, onScreen = camera:WorldToViewportPoint(p.Position)
+                    if onScreen then
+                        local line = Drawing.new("Line")
+                        line.Visible = true
+                        line.From = Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y)
+                        line.To = Vector2.new(screenPos.X, screenPos.Y)
+                        line.Color = Color3.fromRGB(32, 180, 230)
+                        line.Thickness = 2
+                        line.Transparency = 0.85
+                        table.insert(snaplines, line)
+                    end
+                end
+            end
+        end
+    end
+end)
+
         -- Box ESP
+        local boxHandles, zombieHandles, vehHandles, snaplines = {}, {}, {}, {}
         clear(boxHandles)
         if boxESP then
             for _,pl in pairs(Players:GetPlayers()) do
