@@ -1,626 +1,888 @@
---[[ 
-A Long Road — ULTIMATE MOBILE MENU (Hydrogen-Compatible)
-By Shadow | Universe 3.0
-All toggles/sliders fixed, Fly up to 1000, 5 Tabs, Recommended Features
---]]
+--// SIRIUS (RAYFIELD) SHADOW MENU - "A LONG DRIVE" EDITION
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Window = Rayfield:CreateWindow({
+    Name = "SHADOW'S ULTIMATE MENU",
+    LoadingTitle = "A LONG DRIVE | SHADOW",
+    LoadingSubtitle = "All-Purpose Utility Menu",
+    Theme = "Default",
+})
+
+local Players, RunService, UserInputService = game:GetService("Players"), game:GetService("RunService"), game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local Drawing = Drawing or getgenv().Drawing
 
+local MainTab = Window:CreateTab("Main", 4483362458)
+local ESPTab = Window:CreateTab("ESP+", 4483362458)
+local TeleTab = Window:CreateTab("Teleport", 4483362458)
+local CheatTab = Window:CreateTab("Cheat", 4483362458)
+local MiscTab = Window:CreateTab("Misc", 4483362458)
 
--- MAIN UI
-local gui = Instance.new("ScreenGui", game.CoreGui)
-gui.Name = "ALongRoadMobileMenu"
-
-local W,H = 400, 680
-local menu = Instance.new("Frame", gui)
-menu.Size = UDim2.new(0, W, 0, H)
-menu.Position = UDim2.new(0.31, 0, 0.15, 0)
-menu.BackgroundColor3 = Color3.fromRGB(28,28,34)
-menu.Active = true
-menu.Draggable = true
-Instance.new("UICorner", menu).CornerRadius = UDim.new(0,22)
-
--- Minimize / Restore
-local minBtn = Instance.new("TextButton", menu)
-minBtn.Size = UDim2.new(0,36,0,36)
-minBtn.Position = UDim2.new(1,-46,0,8)
-minBtn.Text, minBtn.Font, minBtn.TextSize = "-", Enum.Font.GothamBold, 22
-minBtn.TextColor3 = Color3.new(1,1,1); minBtn.BackgroundColor3 = Color3.fromRGB(40,40,55)
-Instance.new("UICorner", minBtn).CornerRadius = UDim.new(1,0)
-
-local miniBtn = Instance.new("TextButton", gui)
-miniBtn.Size = UDim2.new(0,50,0,50)
-miniBtn.Position = UDim2.new(0,28,0,68)
-miniBtn.Text, miniBtn.Font, miniBtn.TextSize = "+", Enum.Font.GothamBold, 30
-miniBtn.TextColor3 = Color3.new(1,1,1); miniBtn.BackgroundColor3 = Color3.fromRGB(44,44,60)
-Instance.new("UICorner", miniBtn).CornerRadius = UDim.new(1,0)
-miniBtn.Visible = false; miniBtn.Draggable = true
-
-minBtn.MouseButton1Click:Connect(function() menu.Visible=false; miniBtn.Visible=true end)
-miniBtn.MouseButton1Click:Connect(function() menu.Visible=true; miniBtn.Visible=false end)
-
--- Title
-local title = Instance.new("TextLabel", menu)
-title.Size = UDim2.new(1,-60,0,40)
-title.Position = UDim2.new(0,18,0,6)
-title.Text = "A Long Road | ULTIMATE"
-title.Font = Enum.Font.GothamBold; title.TextSize = 22
-title.TextColor3 = Color3.new(1,1,1); title.BackgroundTransparency = 1
-title.TextXAlignment = Enum.TextXAlignment.Left
-
--- TABS
-local tabNames = {"ESP","Movement","Utility","Cheats","Misc"}
-local tabBtns, tabFrames = {}, {}
-local tabY = 50
-local btnW = math.floor((W-36)/#tabNames) - 4
-for i,name in ipairs(tabNames) do
-    local btn = Instance.new("TextButton", menu)
-    btn.Position = UDim2.new(0,18+(btnW+6)*(i-1),0,tabY)
-    btn.Size = UDim2.new(0,btnW,0,28)
-    btn.Text, btn.Font, btn.TextSize = name, Enum.Font.GothamBold, 15
-    btn.TextColor3 = Color3.fromRGB(200,200,255)
-    btn.BackgroundColor3 = Color3.fromRGB(40,50,85)
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
-    tabBtns[i] = btn
-
-    local frame = Instance.new("Frame", menu)
-    frame.Position = UDim2.new(0,0,0,tabY+36)
-    frame.Size = UDim2.new(1,0,1,-(tabY+36)-12)
-    frame.BackgroundTransparency = 1
-    frame.Visible = (i==1)
-    tabFrames[i] = frame
-
-    btn.MouseButton1Click:Connect(function()
-        for j=1,#tabFrames do
-            tabFrames[j].Visible = (j==i)
-            tabBtns[j].BackgroundColor3 = j==i and Color3.fromRGB(32,180,230) or Color3.fromRGB(40,50,85)
-            tabBtns[j].TextColor3 = j==i and Color3.new(1,1,1) or Color3.fromRGB(200,200,255)
+---------------------------------------------------------------------
+-- TELEPORT TAB (INSTANT TELEPORT TO KEY LOCATIONS)
+---------------------------------------------------------------------
+local tpLocs = {
+    ["Gas Station"] = Vector3.new(1000, 16, 500), -- placeholder
+    ["Garage"] = Vector3.new(-650, 17, -400), -- placeholder
+    ["Desert Outpost"] = Vector3.new(2350, 19, 1100), -- placeholder
+    ["Junkyard"] = Vector3.new(-1200, 15, 1050), -- placeholder
+    ["Shop"] = Vector3.new(200, 18, -900), -- placeholder
+}
+for name, pos in pairs(tpLocs) do
+    TeleTab:CreateButton({
+        Name = "Teleport to "..name,
+        Callback = function()
+            local char = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            if char then
+                char.CFrame = CFrame.new(pos + Vector3.new(0,3,0))
+            end
         end
-    end)
+    })
 end
 
--- UI HELPERS --------------------------------------------------
-local function Section(f, txt, y)
-    local lbl = Instance.new("TextLabel", f)
-    lbl.Position = UDim2.new(0,20,0,y)
-    lbl.Size = UDim2.new(1,-40,0,20)
-    lbl.Text, lbl.Font, lbl.TextSize = txt, Enum.Font.GothamBold, 16
-    lbl.TextColor3 = Color3.fromRGB(110,210,255)
-    lbl.BackgroundTransparency = 1
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-end
-
-local function Toggle(f, txt, def, y, cb)
-    local lbl = Instance.new("TextLabel", f)
-    lbl.Position = UDim2.new(0,30,0,y)
-    lbl.Size = UDim2.new(0,170,0,18)
-    lbl.Text, lbl.Font, lbl.TextSize = txt, Enum.Font.Gotham, 14
-    lbl.TextColor3, lbl.BackgroundTransparency = Color3.fromRGB(230,230,230), 1
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-
-    local btn = Instance.new("TextButton", f)
-    btn.Position = UDim2.new(0,215,0,y)
-    btn.Size = UDim2.new(0,34,0,18)
-    btn.BackgroundColor3 = def and Color3.fromRGB(10,190,70) or Color3.fromRGB(60,60,60)
-    btn.Text = ""; Instance.new("UICorner", btn).CornerRadius = UDim.new(1,0)
-    local dot = Instance.new("Frame", btn)
-    dot.Size = UDim2.new(0,12,0,12)
-    dot.Position = def and UDim2.new(0,17,0,3) or UDim2.new(0,3,0,3)
-    dot.BackgroundColor3 = Color3.new(1,1,1); dot.BorderSizePixel=0
-    Instance.new("UICorner", dot).CornerRadius = UDim.new(1,0)
-
-    local state = def
-    btn.MouseButton1Click:Connect(function()
-        state = not state
-        btn.BackgroundColor3 = state and Color3.fromRGB(10,190,70) or Color3.fromRGB(60,60,60)
-        dot:TweenPosition(state and UDim2.new(0,17,0,3) or UDim2.new(0,3,0,3), "Out","Quad",.13)
-        cb(state)
-    end)
-    return function() return state end
-end
-
-local function Slider(f, txt, mn, mx, st, y, cb)
-    local lbl = Instance.new("TextLabel", f)
-    lbl.Position = UDim2.new(0,30,0,y)
-    lbl.Size = UDim2.new(0,110,0,18)
-    lbl.Text, lbl.Font, lbl.TextSize = txt, Enum.Font.Gotham, 14
-    lbl.TextColor3, lbl.BackgroundTransparency = Color3.fromRGB(230,230,230), 1
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-
-    local bar = Instance.new("Frame", f)
-    bar.Position = UDim2.new(0,146,0,y+6)
-    bar.Size = UDim2.new(0,120,0,6)
-    bar.BackgroundColor3 = Color3.fromRGB(80,80,90)
-    Instance.new("UICorner", bar).CornerRadius = UDim.new(1,0)
-
-    local fill = Instance.new("Frame", bar)
-    fill.Size = UDim2.new((st-mn)/(mx-mn),0,1,0)
-    fill.BackgroundColor3 = Color3.fromRGB(20,120,255)
-    Instance.new("UICorner", fill).CornerRadius = UDim.new(1,0)
-
-    local grab = Instance.new("TextButton", f)
-    grab.Size = UDim2.new(0,13,0,13)
-    grab.Position = UDim2.new((st-mn)/(mx-mn), -7, 0, y+3)
-    grab.BackgroundColor3 = Color3.new(1,1,1)
-    grab.BorderSizePixel = 0; grab.Text = ""
-    Instance.new("UICorner", grab).CornerRadius = UDim.new(1,0)
-
-    local val = Instance.new("TextLabel", f)
-    val.Position = UDim2.new(0,278,0,y)
-    val.Size = UDim2.new(0,50,0,18)
-    val.Text = tostring(st)
-    val.Font, val.TextSize = Enum.Font.Gotham, 13
-    val.TextColor3, val.BackgroundTransparency = Color3.fromRGB(230,230,230), 1
-
-    local dragging, value = false, st
-    grab.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dragging=true end end)
-    UserInputService.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dragging=false end end)
-    RunService.RenderStepped:Connect(function()
-        if dragging then
-            local mx = UserInputService:GetMouseLocation().X
-            local pos,size = bar.AbsolutePosition.X, bar.AbsoluteSize.X
-            local rel = math.clamp((mx-pos)/size,0,1)
-            value = math.floor((mn + (mx-pos)/size*(mx-mn))*100)/100
-            -- Snap to computed:
-            value = math.floor((mn + (mx-pos)/size*(mx-mn))*100)/100
-            fill.Size = UDim2.new(rel,0,1,0)
-            grab.Position = UDim2.new(rel,-7,0,y+3)
-            val.Text = tostring(math.floor(value))
-            cb(value)
-        end
-    end)
-    return function() return value end
-end
-
-local function Button(f, txt, y, cb)
-    local b = Instance.new("TextButton", f)
-    b.Position = UDim2.new(0,230,0,y)
-    b.Size = UDim2.new(0,140,0,22)
-    b.Text, b.Font, b.TextSize = txt, Enum.Font.Gotham, 14
-    b.TextColor3, b.BackgroundColor3 = Color3.new(1,1,1), Color3.fromRGB(20,120,220)
-    Instance.new("UICorner", b).CornerRadius = UDim.new(1,0)
-    b.MouseButton1Click:Connect(cb)
-    return b
-end
-
-local function popup(msg)
-    local p = Instance.new("TextLabel", gui)
-    p.Size = UDim2.new(0,220,0,28)
-    p.Position = UDim2.new(0.5,-110,0.08,0)
-    p.BackgroundColor3 = Color3.fromRGB(54,44,74)
-    p.BackgroundTransparency = 0.05
-    p.Font = Enum.Font.GothamBold
-    p.TextSize = 17
-    p.TextColor3 = Color3.fromRGB(160,255,120)
-    p.Text = msg
-    Instance.new("UICorner", p).CornerRadius = UDim.new(1,0)
-    delay(1.4, function() p:Destroy() end)
-end
-
-----------------------------------------------------------
--- TAB: ESP
-----------------------------------------------------------
-do
-    local f, y = tabFrames[1], 8
-    Section(f,"ESP Features",y); y=y+22
-    local boxESP,zombESP,vehESP = false,false,false
-    local espDist = 1500
-    Toggle(f,"Box ESP (Players)",false,y,function(v) boxESP=v end); y=y+21
-    Toggle(f,"Zombie ESP",false,y,function(v) zombESP=v end); y=y+21
-    Toggle(f,"Vehicle ESP",false,y,function(v) vehESP=v end); y=y+21
-    Slider(f,"ESP Distance",50,3000,1500,y,function(v) espDist=v end); y=y+21
-    local snaplineESP = false
-Toggle(f,"Snapline ESP (Players)",false,y,function(v) snaplineESP = v end); y = y + 21
-
-
-
-
-    local boxHandles,zombieHandles,vehHandles = {},{},{}
-    local function clear(t) for _,h in pairs(t) do if h and h.Parent then h:Destroy() end end; table.clear(t) end
-    local function dist(pos) local c=player.Character and player.Character:FindFirstChild("HumanoidRootPart") if c then return (c.Position-pos).Magnitude end return math.huge end
-
-    RunService.RenderStepped:Connect(function()
-        local function clear(t)
-    for _,h in pairs(t) do
-        if typeof(h) == "Instance" and h.Parent then
-            h:Destroy()
-        elseif typeof(h) == "table" and h.Remove then
-            h:Remove()
-        elseif typeof(h) == "userdata" and h.Destroy then
-            h:Destroy()
+---------------------------------------------------------------------
+-- MAIN TAB: Noclip, SuperJump, Hide/GoUp, Magnet
+---------------------------------------------------------------------
+local noclip = false
+MainTab:CreateToggle({
+    Name = "Noclip",
+    CurrentValue = false,
+    Callback = function(v) noclip = v end,
+})
+RunService.Stepped:Connect(function()
+    if noclip and player.Character then
+        for _, part in pairs(player.Character:GetDescendants()) do
+            if part:IsA("BasePart") then part.CanCollide = false end
         end
     end
-    table.clear(t)
+end)
+
+local superJump, jumpPower = false, 50
+MainTab:CreateToggle({
+    Name = "Super Jump",
+    CurrentValue = false,
+    Callback = function(v) superJump = v end,
+})
+MainTab:CreateSlider({
+    Name = "Jump Power",
+    Range = {50, 200},
+    Increment = 5,
+    CurrentValue = 50,
+    Callback = function(v) jumpPower = v end
+})
+UserInputService.JumpRequest:Connect(function()
+    if superJump and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        player.Character.HumanoidRootPart.Velocity = Vector3.new(0, jumpPower*2.7, 0)
+    end
+end)
+
+-- Hide Underground / Go Up
+local lastPos = nil
+MainTab:CreateButton({
+    Name = "Hide Underground",
+    Callback = function()
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            lastPos = player.Character.HumanoidRootPart.CFrame
+            player.Character.HumanoidRootPart.CFrame = CFrame.new(0, -300, 0)
+        end
+    end
+})
+MainTab:CreateButton({
+    Name = "Go Up",
+    Callback = function()
+        if lastPos and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            player.Character.HumanoidRootPart.CFrame = lastPos
+        end
+    end
+})
+
+-- Magnet All Scrap/Items
+MainTab:CreateButton({
+    Name = "Magnet All Scrap",
+    Callback = function()
+        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            for _,obj in pairs(workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and obj.Name:lower():find("scrap") then
+                    obj.CFrame = hrp.CFrame + Vector3.new(math.random(-2,2),1,math.random(-2,2))
+                end
+            end
+        end
+    end
+})
+MainTab:CreateButton({
+    Name = "Magnet EVERYTHING (all items)",
+    Callback = function()
+        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            for _,obj in pairs(workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and not obj:IsDescendantOf(player.Character) then
+                    obj.CFrame = hrp.CFrame + Vector3.new(math.random(-3,3),1,math.random(-3,3))
+                end
+            end
+        end
+    end
+})
+
+---------------------------------------------------------------------
+-- ESP TAB (Advanced Drawing ESP - edit keywords for A Long Drive)
+---------------------------------------------------------------------
+local espPlayer, espCar, espLoot, useSnapline, useBox, showDistance, showCoords = false, false, false, true, true, true, true
+local lineOrigin = "Bottom"
+ESPTab:CreateToggle({Name="Player ESP",CurrentValue=false,Callback=function(v) espPlayer=v end})
+ESPTab:CreateToggle({Name="Car ESP",CurrentValue=false,Callback=function(v) espCar=v end})
+ESPTab:CreateToggle({Name="Loot ESP",CurrentValue=false,Callback=function(v) espLoot=v end})
+ESPTab:CreateToggle({Name="Snapline",CurrentValue=true,Callback=function(v) useSnapline=v end})
+ESPTab:CreateToggle({Name="Box",CurrentValue=true,Callback=function(v) useBox=v end})
+ESPTab:CreateToggle({Name="Show Distance",CurrentValue=true,Callback=function(v) showDistance=v end})
+ESPTab:CreateToggle({Name="Show Coordinates",CurrentValue=true,Callback=function(v) showCoords=v; titleDraw.Visible = v; coordsDraw.Visible = v end})
+ESPTab:CreateDropdown({
+    Name="Line Origin",
+    Options={"Bottom","Middle","Top"},
+    CurrentOption="Bottom",
+    Callback=function(opt) lineOrigin=opt end
+})
+
+local titleDraw = Drawing.new("Text")
+titleDraw.Text = "MADE BY SHADOWLIGHT"
+titleDraw.Position = Vector2.new(10,10)
+titleDraw.Color = Color3.fromRGB(255,255,255)
+titleDraw.Size = 16
+titleDraw.Font = 3
+titleDraw.Outline = true
+titleDraw.Visible = showCoords
+local coordsDraw = Drawing.new("Text")
+coordsDraw.Text = "Coordinates: 0,0,0"
+coordsDraw.Position = Vector2.new(10,30)
+coordsDraw.Color = Color3.fromRGB(255,255,255)
+coordsDraw.Size = 14
+coordsDraw.Font = 3
+coordsDraw.Outline = true
+coordsDraw.Visible = showCoords
+
+local ESPObjects = {}
+local function createDrawing(type, props)
+    local d = Drawing.new(type)
+    for k, v in pairs(props) do d[k] = v end
+    return d
+end
+RunService.RenderStepped:Connect(function()
+    titleDraw.Visible = showCoords
+    coordsDraw.Visible = showCoords
+    local lpChar = player.Character
+    if lpChar and lpChar:FindFirstChild("HumanoidRootPart") then
+        local pos = lpChar.HumanoidRootPart.Position
+        coordsDraw.Text = string.format("Coordinates: %.2f, %.2f, %.2f", pos.X, pos.Y, pos.Z)
+    end
+    local Camera = workspace.CurrentCamera
+    local screenCenter = Vector2.new(Camera.ViewportSize.X/2,
+        lineOrigin=="Bottom" and Camera.ViewportSize.Y or
+        lineOrigin=="Middle" and Camera.ViewportSize.Y/2 or
+        0)
+    local lpPos = lpChar and lpChar:FindFirstChild("HumanoidRootPart") and lpChar.HumanoidRootPart.Position or Vector3.zero
+    for _, esp in pairs(ESPObjects) do for _, obj in pairs(esp) do obj.Visible = false end end
+    -- Player ESP
+    if espPlayer then
+        for _, pl in ipairs(Players:GetPlayers()) do
+            if pl ~= player and pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
+                local part = pl.Character.HumanoidRootPart
+                local dist = (lpPos - part.Position).Magnitude
+                if dist <= 1500 then
+                    local screenPos, visible = Camera:WorldToViewportPoint(part.Position)
+                    if visible then
+                        local id = "PLAYER_" .. pl.Name
+                        if not ESPObjects[id] then
+                            ESPObjects[id] = {
+                                Name = createDrawing("Text", {Color = Color3.fromRGB(80,200,255), Size = 15, Center = true, Outline = true, Font = 3}),
+                                Line = createDrawing("Line", {Color = Color3.fromRGB(80,200,255), Thickness = 1}),
+                                Distance = createDrawing("Text", {Color = Color3.fromRGB(255, 255, 255), Size = 13, Center = true, Font = 3})
+                            }
+                        end
+                        ESPObjects[id].Name.Position = Vector2.new(screenPos.X, screenPos.Y - 15)
+                        ESPObjects[id].Name.Text = pl.Name
+                        ESPObjects[id].Name.Visible = useBox
+                        ESPObjects[id].Line.From = screenCenter
+                        ESPObjects[id].Line.To = Vector2.new(screenPos.X, screenPos.Y)
+                        ESPObjects[id].Line.Visible = useSnapline
+                        ESPObjects[id].Distance.Position = Vector2.new(screenPos.X, screenPos.Y + 10)
+                        ESPObjects[id].Distance.Text = math.floor(dist) .. "m"
+                        ESPObjects[id].Distance.Visible = showDistance
+                    end
+                end
+            end
+        end
+    end
+    -- Car ESP
+    if espCar then
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("Model") and (obj.Name:lower():find("car") or obj.Name:lower():find("vehicle")) and obj:FindFirstChild("HumanoidRootPart") then
+                local part = obj.HumanoidRootPart
+                local dist = (lpPos - part.Position).Magnitude
+                if dist <= 1500 then
+                    local screenPos, visible = Camera:WorldToViewportPoint(part.Position)
+                    if visible then
+                        local id = "CAR_"..obj:GetDebugId()
+                        if not ESPObjects[id] then
+                            ESPObjects[id] = {
+                                Name = createDrawing("Text", {Color = Color3.fromRGB(255, 70, 70), Size = 17, Center = true, Outline = true, Font = 3}),
+                                Line = createDrawing("Line", {Color = Color3.fromRGB(255,70,70), Thickness = 2}),
+                                Distance = createDrawing("Text", {Color = Color3.fromRGB(255, 255, 255), Size = 14, Center = true, Font = 3})
+                            }
+                        end
+                        ESPObjects[id].Name.Position = Vector2.new(screenPos.X, screenPos.Y - 17)
+                        ESPObjects[id].Name.Text = "CAR"
+                        ESPObjects[id].Name.Visible = useBox
+                        ESPObjects[id].Line.From = screenCenter
+                        ESPObjects[id].Line.To = Vector2.new(screenPos.X, screenPos.Y)
+                        ESPObjects[id].Line.Visible = useSnapline
+                        ESPObjects[id].Distance.Position = Vector2.new(screenPos.X, screenPos.Y + 10)
+                        ESPObjects[id].Distance.Text = math.floor(dist) .. "m"
+                        ESPObjects[id].Distance.Visible = showDistance
+                    end
+                end
+            end
+        end
+    end
+    -- Loot ESP
+    if espLoot then
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and (obj.Name:lower():find("loot") or obj.Name:lower():find("scrap") or obj.Name:lower():find("item")) then
+                local dist = (lpPos - obj.Position).Magnitude
+                if dist <= 1500 then
+                    local screenPos, visible = Camera:WorldToViewportPoint(obj.Position)
+                    if visible then
+                        local id = "LOOT_"..obj:GetDebugId()
+                        if not ESPObjects[id] then
+                            ESPObjects[id] = {
+                                Name = createDrawing("Text", {Color = Color3.fromRGB(255, 200, 60), Size = 13, Center = true, Outline = true, Font = 3}),
+                                Line = createDrawing("Line", {Color = Color3.fromRGB(255, 200, 60), Thickness = 1}),
+                                Distance = createDrawing("Text", {Color = Color3.fromRGB(255, 255, 255), Size = 13, Center = true, Font = 3})
+                            }
+                        end
+                        ESPObjects[id].Name.Position = Vector2.new(screenPos.X, screenPos.Y - 10)
+                        ESPObjects[id].Name.Text = "Loot"
+                        ESPObjects[id].Name.Visible = useBox
+                        ESPObjects[id].Line.From = screenCenter
+                        ESPObjects[id].Line.To = Vector2.new(screenPos.X, screenPos.Y)
+                        ESPObjects[id].Line.Visible = useSnapline
+                        ESPObjects[id].Distance.Position = Vector2.new(screenPos.X, screenPos.Y + 10)
+                        ESPObjects[id].Distance.Text = math.floor(dist) .. "m"
+                        ESPObjects[id].Distance.Visible = showDistance
+                    end
+                end
+            end
+        end
+    end
+end)
+
+---------------------------------------------------------------------
+-- CHEAT TAB: Delete Stamina, Godmode, Sprint, Reset
+---------------------------------------------------------------------
+CheatTab:CreateButton({
+    Name = "Delete Stamina",
+    Callback = function()
+        if ReplicatedStorage:FindFirstChild("TKSMNA") and ReplicatedStorage.TKSMNA:FindFirstChild("Event") then
+            local event = ReplicatedStorage.TKSMNA.Event
+            for _, connection in ipairs(getconnections(event)) do
+                if connection.Connected then connection:Disconnect() end
+            end
+        end
+        for _, module in ipairs(getloadedmodules()) do
+            if module.Name == "M_H" then
+                local moduleScript = require(module)
+                if moduleScript and moduleScript.TakeStamina then
+                    moduleScript.TakeStamina = function() return end
+                end
+            end
+        end
+    end
+})
+local godmode, infSprint = false, false
+CheatTab:CreateToggle({Name="Godmode", CurrentValue=false, Callback=function(v) godmode=v end})
+CheatTab:CreateToggle({Name="Infinite Sprint", CurrentValue=false, Callback=function(v) infSprint=v end})
+CheatTab:CreateButton({
+    Name="Reset Character",
+    Callback=function()
+        if player.Character then player.Character:BreakJoints() end
+    end
+})
+RunService.RenderStepped:Connect(function()
+    if godmode and player.Character then
+        local hum = player.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.Health = math.huge end
+    end
+    if infSprint and player.Character then
+        for _,v in pairs(player.Character:GetDescendants()) do
+            if (v.Name:lower():find("stam") or v.Name:lower():find("energy")) and (v:IsA("NumberValue") or v:IsA("IntValue")) then
+                v.Value = 999999
+            end
+        end
+    end
+end)
+
+---------------------------------------------------------------------
+-- MISC TAB: FOV, Rainbow, Fullbright (permanent), Third Person (fixed)
+---------------------------------------------------------------------
+local fovVal = camera.FieldOfView
+MiscTab:CreateSlider({
+    Name = "Field of View",
+    Range = {50, 120},
+    Increment = 1,
+    CurrentValue = 70,
+    Callback = function(v) camera.FieldOfView = v; fovVal = v end
+})
+MiscTab:CreateButton({
+    Name = "Reset FOV",
+    Callback = function() camera.FieldOfView = 70 end
+})
+local rainbow = false
+MiscTab:CreateToggle({
+    Name="Rainbow Character",
+    CurrentValue=false,
+    Callback=function(v) rainbow=v end
+})
+RunService.RenderStepped:Connect(function()
+    if rainbow and player.Character then
+        local hue = (tick()/3)%1
+        local col = Color3.fromHSV(hue,1,1)
+        for _,p in pairs(player.Character:GetDescendants()) do
+            if p:IsA("BasePart") then p.Color = col end
+        end
+    end
+end)
+local fullbright = false
+local fullbrightLoop = nil
+MiscTab:CreateToggle({
+    Name="Full Brightness (PERMANENT)",
+    CurrentValue=false,
+    Callback=function(v)
+        fullbright = v
+        if fullbrightLoop then fullbrightLoop:Disconnect() end
+        if v then
+            fullbrightLoop = RunService.RenderStepped:Connect(function()
+                Lighting.Brightness = 2
+                Lighting.ClockTime = 14
+                Lighting.FogEnd = 100000
+                Lighting.GlobalShadows = false
+                Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+            end)
+        else
+            Lighting.Brightness = 1
+            Lighting.ClockTime = 12
+            Lighting.FogEnd = 1000
+            Lighting.GlobalShadows = true
+            Lighting.OutdoorAmbient = Color3.fromRGB(213, 213, 213)
+        end
+    end
+})
+
+local thirdPerson = false
+MiscTab:CreateToggle({
+    Name="Third Person (Fixed)",
+    CurrentValue=false,
+    Callback=function(v)
+        thirdPerson = v
+        if v then
+            player.CameraMaxZoomDistance = 30
+            player.CameraMinZoomDistance = 0.5
+            if not _G._thirdPersonLoop then
+                _G._thirdPersonLoop = RunService.RenderStepped:Connect(function()
+                    if thirdPerson then
+                        player.CameraMaxZoomDistance = 30
+                        player.CameraMinZoomDistance = 0.5
+                    else
+                        player.CameraMaxZoomDistance = 0.5
+                        player.CameraMinZoomDistance = 0.5
+                        _G._thirdPersonLoop:Disconnect()
+                        _G._thirdPersonLoop = nil
+                    end
+                end)
+            end
+        else
+            player.CameraMaxZoomDistance = 0.5
+            player.CameraMinZoomDistance = 0.5
+        end
+    end
+})
+------------------ AUTO DUPLICATE TOUCHING ITEMS (PASTE BELOW) ------------------
+
+local player = game:GetService("Players").LocalPlayer
+
+RunService.RenderStepped:Connect(function()
+    local char = player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = char.HumanoidRootPart
+    for _, obj in pairs(workspace:GetDescendants()) do
+        -- Only duplicate items/tools/parts not already belonging to the player
+        if obj:IsA("BasePart") and not obj:IsDescendantOf(char) then
+            -- BoundingBox touch check
+            if (obj.Position - hrp.Position).Magnitude < ((obj.Size.Magnitude + hrp.Size.Magnitude) / 2) + 2 then
+                -- For tools in workspace
+                local tool = obj.Parent
+                if tool and tool:IsA("Tool") and tool.Parent == workspace then
+                    if not tool:FindFirstChild("__Duped") then
+                        local clone = tool:Clone()
+                        clone.Parent = workspace
+                        -- Mark original as duplicated so we don't spam duplicates
+                        Instance.new("BoolValue", tool).Name = "__Duped"
+                        popup("Duplicated "..tool.Name, Color3.fromRGB(200,255,60))
+                    end
+                -- For loose parts (loot, etc)
+                elseif not obj:FindFirstChild("__Duped") and not (tool and tool:IsA("Tool")) then
+                    local clone = obj:Clone()
+                    clone.Parent = workspace
+                    Instance.new("BoolValue", obj).Name = "__Duped"
+                    popup("Duplicated "..obj.Name, Color3.fromRGB(255,220,60))
+                end
+            end
+        end
+    end
+end)
+------------------ SHADOW'S ADVANCED ADDONS (A LONG DRIVE) ------------------
+
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+-- INDICATOR FUNCTION (Popup)
+local function popup(msg, color)
+    local notif = Drawing.new("Text")
+    notif.Text = msg
+    notif.Position = Vector2.new(camera.ViewportSize.X/2 - (#msg*5), 45)
+    notif.Size = 20
+    notif.Color = color or Color3.fromRGB(255, 255, 0)
+    notif.Center = false
+    notif.Font = 3
+    notif.Outline = true
+    notif.Visible = true
+    task.spawn(function()
+        wait(1.3)
+        notif.Visible = false
+        notif:Remove()
+    end)
+end
+
+----------------------- FLY SYSTEM -----------------------
+local fly, flySpeed = false, 50
+local flyBG, flyBV
+
+MainTab:CreateToggle({
+    Name = "Fly",
+    CurrentValue = false,
+    Callback = function(v)
+        fly = v
+        popup("Fly "..(v and "Enabled" or "Disabled"), Color3.fromRGB(255,215,70))
+    end,
+})
+MainTab:CreateSlider({
+    Name = "Fly Speed",
+    Range = {10, 500},
+    Increment = 5,
+    CurrentValue = 50,
+    Callback = function(v) flySpeed = v end
+})
+
+local function getMoveDir()
+    local dir = Vector3.zero
+    if UserInputService:IsKeyDown(Enum.KeyCode.W) then dir = dir + camera.CFrame.LookVector end
+    if UserInputService:IsKeyDown(Enum.KeyCode.S) then dir = dir - camera.CFrame.LookVector end
+    if UserInputService:IsKeyDown(Enum.KeyCode.A) then dir = dir - camera.CFrame.RightVector end
+    if UserInputService:IsKeyDown(Enum.KeyCode.D) then dir = dir + camera.CFrame.RightVector end
+    return dir.Magnitude > 0 and dir.Unit or Vector3.zero
 end
 
 RunService.RenderStepped:Connect(function()
-    -- ESP Cleanups
-    clear(boxHandles)
-    clear(zombieHandles)
-    clear(vehHandles)
-    clear(snaplines)
+    if fly and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = player.Character.HumanoidRootPart
+        if not flyBG then
+            flyBG = Instance.new("BodyGyro", hrp)
+            flyBG.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+            flyBG.P = 9e4
+        end
+        if not flyBV then
+            flyBV = Instance.new("BodyVelocity", hrp)
+            flyBV.MaxForce = Vector3.new(9e9,9e9,9e9)
+        end
+        local move = getMoveDir()
+        flyBG.CFrame = CFrame.new(hrp.Position, hrp.Position + camera.CFrame.LookVector)
+        flyBV.Velocity = move * flySpeed
+    else
+        if flyBG then pcall(function() flyBG:Destroy() end) flyBG = nil end
+        if flyBV then pcall(function() flyBV:Destroy() end) flyBV = nil end
+    end
+end)
 
-    -- ... your existing Box, Zombie, Vehicle ESP drawing ...
+----------------------- DELETE HEALTH -----------------------
+CheatTab:CreateButton({
+    Name = "Delete Health (Instant Die)",
+    Callback = function()
+        if player.Character then
+            local hum = player.Character:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum.Health = 0
+                popup("Health deleted!", Color3.fromRGB(255,70,70))
+            end
+        end
+    end
+})
 
-    -- Snapline ESP (Players)
-    if snaplineESP then
-        for _,pl in pairs(Players:GetPlayers()) do
-            if pl ~= player and pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
-                local p = pl.Character.HumanoidRootPart
-                if dist(p.Position) <= espDist then
-                    local screenPos, onScreen = camera:WorldToViewportPoint(p.Position)
-                    if onScreen then
-                        local line = Drawing.new("Line")
-                        line.Visible = true
-                        line.From = Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y)
-                        line.To = Vector2.new(screenPos.X, screenPos.Y)
-                        line.Color = Color3.fromRGB(32, 180, 230)
-                        line.Thickness = 2
-                        line.Transparency = 0.85
-                        table.insert(snaplines, line)
-                    end
-                end
+----------------------- TELEPORT/SAVE LOCATION -----------------------
+local savedLocs = {}
+
+TeleTab:CreateButton({
+    Name = "Save Current Location",
+    Callback = function()
+        local char = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if char then
+            table.insert(savedLocs, char.CFrame)
+            popup("Location Saved (#"..#savedLocs..")", Color3.fromRGB(80,180,255))
+        end
+    end
+})
+TeleTab:CreateButton({
+    Name = "Teleport to Last Saved",
+    Callback = function()
+        local char = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if char and #savedLocs > 0 then
+            char.CFrame = savedLocs[#savedLocs]
+            popup("Teleported to Saved Location", Color3.fromRGB(80,255,120))
+        end
+    end
+})
+TeleTab:CreateButton({
+    Name = "Clear Saved Locations",
+    Callback = function()
+        savedLocs = {}
+        popup("All Saved Locations Cleared", Color3.fromRGB(255,70,70))
+    end
+})
+
+-- Place in MainTab or MiscTab
+MiscTab:CreateToggle({
+    Name = "Anti-AFK",
+    CurrentValue = false,
+    Callback = function(v)
+        if v then
+            getgenv().antiAfkConn = game:GetService("Players").LocalPlayer.Idled:Connect(function()
+                VirtualUser:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+                task.wait(1)
+                VirtualUser:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+            end)
+            popup("Anti-AFK Enabled", Color3.fromRGB(80,255,140))
+        else
+            if getgenv().antiAfkConn then getgenv().antiAfkConn:Disconnect() getgenv().antiAfkConn = nil end
+            popup("Anti-AFK Disabled", Color3.fromRGB(255,80,80))
+        end
+    end
+})
+-- Place in MainTab, TeleTab, or your Utility tab
+local autoCollect = false
+MainTab:CreateToggle({
+    Name = "Auto Collect Nearby Fuel",
+    CurrentValue = false,
+    Callback = function(v)
+        autoCollect = v
+        popup("Auto-Collect "..(v and "Enabled" or "Disabled"), v and Color3.fromRGB(255,255,120) or Color3.fromRGB(255,80,80))
+    end
+})
+
+RunService.RenderStepped:Connect(function()
+    if not autoCollect then return end
+    local char = player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = char.HumanoidRootPart
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and obj.Name:lower():find("fuel") and (obj.Position - hrp.Position).Magnitude < 10 then
+            if obj.Parent and obj.Parent:IsA("Tool") then
+                obj.Parent.Parent = player.Backpack
+                popup("Picked up fuel!", Color3.fromRGB(255,220,70))
             end
         end
     end
 end)
-
-        -- Box ESP
-        local boxHandles, zombieHandles, vehHandles, snaplines = {}, {}, {}, {}
-        clear(boxHandles)
-        if boxESP then
-            for _,pl in pairs(Players:GetPlayers()) do
-                if pl~=player and pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
-                    local p = pl.Character.HumanoidRootPart
-                    if dist(p.Position)<=espDist then
-                        local b=Instance.new("BoxHandleAdornment",p)
-                        b.Adornee,p=b,p
-                        b.Size=p.Size+Vector3.new(2,2,2)
-                        b.Color3=Color3.fromRGB(0,230,60); b.Transparency=0.58
-                        b.AlwaysOnTop=true; b.ZIndex=10
-                        table.insert(boxHandles,b)
-                    end
-                end
-            end
-        end
-        -- Zombie ESP
-        clear(zombieHandles)
-        if zombESP then
-            for _,mdl in pairs(workspace:GetDescendants()) do
-                if mdl:IsA("Model") and not Players:GetPlayerFromCharacter(mdl)
-                   and (mdl.Name:lower():find("zombie") or (mdl:FindFirstChildOfClass("Humanoid") and mdl:FindFirstChild("Head"))) then
-                    local p = mdl:FindFirstChild("HumanoidRootPart")
-                    if p and dist(p.Position)<=espDist then
-                        local b=Instance.new("BoxHandleAdornment",p)
-                        b.Adornee,p=b,p
-                        b.Size=p.Size+Vector3.new(1,1,1)
-                        b.Color3=Color3.fromRGB(240,240,20); b.Transparency=0.5
-                        b.AlwaysOnTop=true; b.ZIndex=10
-                        table.insert(zombieHandles,b)
-                    end
-                end
-            end
-        end
-        -- Vehicle ESP
-        clear(vehHandles)
-        if vehESP then
-            for _,mdl in pairs(workspace:GetChildren()) do
-                if mdl:IsA("Model") and (mdl.Name:lower():find("car") or mdl.Name:lower():find("vehicle")) then
-                    local p = mdl:FindFirstChild("HumanoidRootPart") or mdl:FindFirstChildWhichIsA("BasePart")
-                    if p and dist(p.Position)<=espDist then
-                        local b=Instance.new("BoxHandleAdornment",p)
-                        b.Adornee,p=b,p
-                        b.Size=p.Size+Vector3.new(3,3,3)
-                        b.Color3=Color3.fromRGB(80,160,255); b.Transparency=0.44
-                        b.AlwaysOnTop=true; b.ZIndex=8
-                        table.insert(vehHandles,b)
-                    end
-                end
-            end
-        end
-    end)
-end
-
-----------------------------------------------------------
--- TAB: MOVEMENT
-----------------------------------------------------------
-do
-    local f,y = tabFrames[2],8
-    Section(f,"Movement",y); y=y+22
-    local fly,noclip,superJump,walkOnWater = false,false,false,false
-    local walkSpeed,flySpeed,jumpPower = 16,30,50
-
-    Toggle(f,"Fly",false,y,function(v) fly=v end); y=y+21
-    Slider(f,"Fly Speed",0,1000,30,y,function(v) flySpeed=v end); y=y+22
-    Toggle(f,"NoClip",false,y,function(v) noclip=v end); y=y+21
-    Slider(f,"Walk Speed",16,250,16,y,function(v) walkSpeed=v end); y=y+22
-    Slider(f,"Jump Power",50,200,50,y,function(v) jumpPower=v end); y=y+22
-    Toggle(f,"Super Jump",false,y,function(v) superJump=v end); y=y+21
-    Toggle(f,"Walk on Water",false,y,function(v) walkOnWater=v end); y=y+21
-
-    local bgCon, bvCon
-    RunService.RenderStepped:Connect(function()
-        local char = player.Character
-        if char then
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            local hrp = char:FindFirstChild("HumanoidRootPart")
-            if hum then
-                hum.WalkSpeed = walkSpeed
-                hum.JumpPower = jumpPower
-            end
-            if noclip then
-                for _,p in pairs(char:GetDescendants()) do
-                    if p:IsA("BasePart") then p.CanCollide=false end
-                end
-            end
-            if walkOnWater then
-                for _,part in pairs(workspace:GetDescendants()) do
-                    if part:IsA("BasePart") and part.Material==Enum.Material.Water then
-                        part.CanCollide=true
-                    end
-                end
-            end
-            -- Fly
-            if fly and hrp then
-                if not hrp:FindFirstChild("BodyGyro") then
-                    local bg=Instance.new("BodyGyro",hrp); bg.D=9; bg.MaxTorque=Vector3.new(9e9,9e9,9e9)
-                    local bv=Instance.new("BodyVelocity",hrp); bv.MaxForce=Vector3.new(9e9,9e9,9e9)
-                end
-                local bg, bv = hrp:FindFirstChild("BodyGyro"), hrp:FindFirstChild("BodyVelocity")
-                local camCF = camera.CFrame
-                local mv = Vector3.new()
-                if UserInputService:IsKeyDown(Enum.KeyCode.W) then mv = mv + camCF.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.S) then mv = mv - camCF.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.A) then mv = mv - camCF.RightVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.D) then mv = mv + camCF.RightVector end
-                mv = mv.Magnitude>0 and mv.Unit or Vector3.new()
-                bg.CFrame = CFrame.new(hrp.Position, hrp.Position+camCF.LookVector)
-                bv.Velocity = mv * flySpeed
-            else
-                if hrp then
-                    if hrp:FindFirstChild("BodyGyro") then hrp.BodyGyro:Destroy() end
-                    if hrp:FindFirstChild("BodyVelocity") then hrp.BodyVelocity:Destroy() end
-                end
-            end
-        end
-    end)
-    -- Super Jump connection
-    UserInputService.JumpRequest:Connect(function()
-        if superJump and player.Character and player.Character:FindFirstChild("Humanoid") then
-            player.Character.Humanoid:ChangeState("Jumping")
-            if player.Character:FindFirstChild("HumanoidRootPart") then
-                player.Character.HumanoidRootPart.Velocity = Vector3.new(0, jumpPower*2.5, 0)
-            end
-        end
-    end)
-end
-
-----------------------------------------------------------
--- TAB: UTILITY
-----------------------------------------------------------
-do
-    local f,y = tabFrames[3],8
-    Section(f,"Utility",y); y=y+22
-
-    -- Teleport to mouse
-    local teleOn=false
-    Toggle(f,"Teleport-to-mouse (T)",false,y,function(v) teleOn=v end); y=y+21
-
-    -- Magnet radius
-    local magR=300
-    Slider(f,"Magnet Radius",50,2000,300,y,function(v) magR=v end); y=y+22
-
-    -- Save/Restore Position
-    local savedPos=nil
-    Button(f,"Save Position",y,function()
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            savedPos = player.Character.HumanoidRootPart.CFrame
-            popup("Position Saved")
-        end
-    end)
-    Button(f,"Teleport Back",y+28,function()
-        if savedPos and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            player.Character.HumanoidRootPart.CFrame = savedPos
-            popup("Teleported Back")
-        end
-    end); y=y+56
-
-    -- Bring Items (All + Categories)
-    local categories = {
-        All = {"car","engine","part","fuel","gas","tank","wheel","tire","battery","gun","pistol","rifle","shotgun","ammo","bread","cake","popcorn","medkit","bandage","key","torch"},
-        ["Car Parts"] = {"car","engine","part","fuel","gas","tank","wheel","tire","battery"},
-        Weapons = {"gun","pistol","rifle","shotgun","ammo"},
-        ["Food/Drink"] = {"bread","cake","popcorn"},
-        ["Med/Repair"] = {"medkit","bandage"},
-        ["Keys/Tools"] = {"key","torch"}
-    }
-    local function bring(list)
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp = player.Character.HumanoidRootPart
-            local cnt=0
-            for _,obj in pairs(workspace:GetDescendants()) do
-                if obj:IsA("BasePart") and (hrp.Position-obj.Position).Magnitude<=magR and not obj:IsDescendantOf(player.Character) then
-                    local nm=obj.Name:lower()
-                    for _,w in ipairs(list) do
-                        if nm:find(w) then
-                            obj.CFrame = CFrame.new(hrp.Position+camera.CFrame.LookVector*6 + Vector3.new(math.random(-3,3),1,math.random(-3,3)))
-                            cnt=cnt+1; break
-                        end
-                    end
-                end
-            end
-            popup("Brought "..cnt.." items")
-        end
-    end
-    Button(f,"Bring ALL Items",y,function() bring(categories.All) end)
-    local searchBtn = Instance.new("TextButton",f)
-    searchBtn.Position = UDim2.new(0,363,0,y)
-    searchBtn.Size = UDim2.new(0,28,0,22)
-    searchBtn.Text, searchBtn.Font, searchBtn.TextSize = "🔍", Enum.Font.GothamBold, 16
-    searchBtn.TextColor3 = Color3.fromRGB(220,220,255)
-    searchBtn.BackgroundColor3 = Color3.fromRGB(35,35,60)
-    Instance.new("UICorner", searchBtn).CornerRadius = UDim.new(1,0)
-    local sFrame = Instance.new("Frame", f)
-    sFrame.Position = UDim2.new(0,230,0,y+26)
-    sFrame.Size = UDim2.new(0,158,0,3+24*#categories)
-    sFrame.BackgroundColor3 = Color3.fromRGB(25,25,40)
-    sFrame.Visible = false
-    Instance.new("UICorner", sFrame).CornerRadius = UDim.new(0,12)
-    local idx=0
-    for cat,list in pairs(categories) do
-        idx=idx+1
-        local b=Instance.new("TextButton", sFrame)
-        b.Position = UDim2.new(0,7,0,3+(idx-1)*24)
-        b.Size = UDim2.new(1,-14,0,20)
-        b.Text, b.Font, b.TextSize = "Bring "..cat, Enum.Font.Gotham, 14
-        b.TextColor3, b.BackgroundColor3 = Color3.new(1,1,1), Color3.fromRGB(35,90,150)
-        Instance.new("UICorner", b).CornerRadius = UDim.new(1,0)
-        b.MouseButton1Click:Connect(function() bring(list); sFrame.Visible=false end)
-    end
-    searchBtn.MouseButton1Click:Connect(function() sFrame.Visible = not sFrame.Visible end)
-
-    -- Teleport input
-    UserInputService.InputBegan:Connect(function(i)
-        if teleOn and i.KeyCode==Enum.KeyCode.T then
-            if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                player.Character.HumanoidRootPart.CFrame = CFrame.new(player:GetMouse().Hit.p)
-            end
-        end
-    end)
-end
-
-----------------------------------------------------------
--- TAB: CHEATS
-----------------------------------------------------------
-do
-    local f,y = tabFrames[4],8
-    Section(f,"Game Cheats",y); y=y+22
-
-    local infStam,infAmmo,noDelay,godmode,infJump = false,false,false,false,false
-    Toggle(f,"Infinite Stamina",false,y,function(v) infStam=v end); y=y+21
-    Toggle(f,"Infinite Ammo",false,y,function(v) infAmmo=v end); y=y+21
-    Toggle(f,"No Shoot Delay",false,y,function(v) noDelay=v end); y=y+21
-    Toggle(f,"Godmode",false,y,function(v) godmode=v; if v and player.Character then player.Character:FindFirstChildOfClass("Humanoid").Health=math.huge end end); y=y+21
-    Toggle(f,"Infinite Jump",false,y,function(v) infJump=v end); y=y+21
-
-    -- Reset Character
-    Button(f,"Reset Character",y,function()
-        if player.Character then player.Character:BreakJoints() end
-    end); y=y+28
-
-    -- Cheats loop
-    RunService.RenderStepped:Connect(function()
-        if infStam and player.Character then
-            for _,v in pairs(player.Character:GetDescendants()) do
-                local n=v.Name:lower()
-                if (n:find("stam") or n:find("energy")) and (v:IsA("NumberValue") or v:IsA("IntValue")) then
-                    v.Value = 999999
-                end
-            end
-        end
-        if infAmmo or noDelay then
-            local function patch(t)
-                for _,v in ipairs(t:GetDescendants()) do
-                    local n=v.Name:lower()
-                    if infAmmo and (n:find("ammo") or n:find("clip")) and (v:IsA("NumberValue") or v:IsA("IntValue")) then
-                        v.Value=999999
-                    end
-                    if noDelay and (n:find("delay") or n:find("reload")) and (v:IsA("NumberValue") or v:IsA("IntValue")) then
-                        v.Value=0
-                    end
-                end
-            end
-            for _,tool in ipairs(player.Backpack:GetChildren()) do if tool:IsA("Tool") then patch(tool) end end
-            if player.Character then
-                for _,tool in ipairs(player.Character:GetChildren()) do if tool:IsA("Tool") then patch(tool) end end
-            end
-        end
-        if infJump then
-            -- handled by jump request below
-        end
-    end)
-
-    -- Infinite jump handler
-    UserInputService.JumpRequest:Connect(function()
-        if infJump and player.Character then
-            player.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
-        end
-    end)
-end
-
-----------------------------------------------------------
--- TAB: MISC
-----------------------------------------------------------
-do
-    local f,y = tabFrames[5],8
-    Section(f,"Misc Features",y); y=y+22
-
-    -- FOV Changer
-    local fovVal = camera.FieldOfView
-    Slider(f,"Field of View",50,120,workspace.CurrentCamera.FieldOfView,y,function(v) camera.FieldOfView = v; fovVal=v end); y=y+22
-
-    -- Rainbow Character
-    local rainbow = false
-    Toggle(f,"Rainbow Character",false,y,function(v) rainbow=v end); y=y+21
-
-    -- Teleport to Player
-    local tpDrop = Instance.new("Frame", f)
-    tpDrop.Position = UDim2.new(0,30,0,y)
-    tpDrop.Size = UDim2.new(0,180,0,26)
-    tpDrop.BackgroundColor3 = Color3.fromRGB(40,40,60)
-    Instance.new("UICorner", tpDrop).CornerRadius = UDim.new(0,6)
-    local tpText = Instance.new("TextLabel", tpDrop)
-    tpText.Position = UDim2.new(0,6,0,3)
-    tpText.Size = UDim2.new(1,-12,0,20)
-    tpText.Text="Teleport to Player"; tpText.Font=Enum.Font.Gotham; tpText.TextSize=14
-    tpText.TextColor3=Color3.new(1,1,1); tpText.BackgroundTransparency=1
-    local tpInput = Instance.new("TextBox", tpDrop)
-    tpInput.PlaceholderText="Player Name"; tpInput.Font=Enum.Font.Gotham; tpInput.TextSize=14
-    tpInput.Position=UDim2.new(0,6,0,25); tpInput.Size=UDim2.new(0,168,0,24)
-    tpInput.BackgroundColor3=Color3.fromRGB(60,60,80); tpInput.TextColor3=Color3.new(1,1,1)
-    Instance.new("UICorner", tpInput).CornerRadius=UDim.new(0,6)
-    local goBtn = Instance.new("TextButton", f)
-    goBtn.Position = UDim2.new(0,230,0,y)
-    goBtn.Size     = UDim2.new(0,130,0,24)
-    goBtn.Text,goBtn.Font,goBtn.TextSize = "Go",Enum.Font.GothamBold,14
-    goBtn.TextColor3,goBtn.BackgroundColor3 = Color3.new(1,1,1), Color3.fromRGB(20,140,220)
-    Instance.new("UICorner", goBtn).CornerRadius = UDim.new(1,0)
-    goBtn.MouseButton1Click:Connect(function()
-        local tgt = Players:FindFirstChild(tpInput.Text)
-        if tgt and tgt.Character and tgt.Character:FindFirstChild("HumanoidRootPart") then
-            player.Character.HumanoidRootPart.CFrame = tgt.Character.HumanoidRootPart.CFrame
-            popup("Teleported to "..tpInput.Text)
-        else
-            popup("Player not found")
-        end
-    end)
-    y=y+60
-
-    -- Reset FOV button
-    Button(f,"Reset FOV",y,function() camera.FieldOfView = 70; popup("FOV Reset") end); y=y+28
-
-    -- Rainbow loop
-    RunService.RenderStepped:Connect(function()
-        if rainbow and player.Character then
-            local hue = (tick()/3)%1
-            local col = Color3.fromHSV(hue,1,1)
-            for _,p in pairs(player.Character:GetDescendants()) do
+-- Place in MiscTab or ESPTab
+local rainbowCar = false
+MiscTab:CreateToggle({
+    Name = "Rainbow Vehicle Paint",
+    CurrentValue = false,
+    Callback = function(v) rainbowCar = v; popup("Rainbow Car "..(v and "Enabled" or "Disabled")) end
+})
+RunService.RenderStepped:Connect(function()
+    if rainbowCar and player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+        local seat = player.Character.Humanoid.SeatPart
+        if seat and seat:IsA("VehicleSeat") and seat.Parent then
+            local col = Color3.fromHSV((tick()/2)%1,1,1)
+            for _,p in pairs(seat.Parent:GetDescendants()) do
                 if p:IsA("BasePart") then p.Color = col end
             end
         end
-    end)
+    end
+end)
+-- Add to ESPTab
+local espGas, espWater, espFood = false, false, false
+ESPTab:CreateToggle({Name="Gas ESP",CurrentValue=false,Callback=function(v) espGas=v; popup("Gas ESP "..(v and "On" or "Off")) end})
+ESPTab:CreateToggle({Name="Water ESP",CurrentValue=false,Callback=function(v) espWater=v; popup("Water ESP "..(v and "On" or "Off")) end})
+ESPTab:CreateToggle({Name="Food ESP",CurrentValue=false,Callback=function(v) espFood=v; popup("Food ESP "..(v and "On" or "Off")) end})
+
+RunService.RenderStepped:Connect(function()
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local Camera = workspace.CurrentCamera
+        local lpPos = player.Character.HumanoidRootPart.Position
+        -- Gas
+        if espGas then
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and obj.Name:lower():find("gas") then
+                    -- Add Drawing ESP here, or highlight/outline, etc.
+                end
+            end
+        end
+        -- Water (etc, similar structure)
+        -- Food
+    end
+end)
+-- Place in TeleTab or MainTab
+local tapTP = false
+TeleTab:CreateToggle({
+    Name = "Tap to Teleport (Mobile)",
+    CurrentValue = false,
+    Callback = function(v)
+        tapTP = v
+        popup("Tap-to-TP "..(v and "Enabled" or "Disabled"), v and Color3.fromRGB(100,255,100) or Color3.fromRGB(255,100,100))
+    end
+})
+
+local UIS = game:GetService("UserInputService")
+local mouse = player:GetMouse()
+UIS.InputBegan:Connect(function(input, gpe)
+    if tapTP and input.UserInputType == Enum.UserInputType.Touch then
+        local target = mouse.Hit and mouse.Hit.p
+        if target and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            player.Character.HumanoidRootPart.CFrame = CFrame.new(target + Vector3.new(0, 4, 0))
+            popup("Teleported to tapped location!", Color3.fromRGB(120,255,120))
+        end
+    end
+end)
+-- Place in MiscTab
+local alwaysDay = false
+MiscTab:CreateToggle({
+    Name = "Always Day",
+    CurrentValue = false,
+    Callback = function(v)
+        alwaysDay = v
+        popup("Always Day "..(v and "Enabled" or "Disabled"), v and Color3.fromRGB(255,255,100) or Color3.fromRGB(255,100,100))
+    end
+})
+
+local Lighting = game:GetService("Lighting")
+local dayLoop
+MiscTab:CreateButton({
+    Name = "Reset Lighting",
+    Callback = function()
+        Lighting.Brightness = 1
+        Lighting.ClockTime = 12
+        Lighting.FogEnd = 1000
+        Lighting.OutdoorAmbient = Color3.fromRGB(213,213,213)
+        popup("Lighting Reset!", Color3.fromRGB(150,150,255))
+    end
+})
+
+RunService.RenderStepped:Connect(function()
+    if alwaysDay then
+        Lighting.ClockTime = 12
+        Lighting.Brightness = 2
+        Lighting.FogEnd = 100000
+        Lighting.OutdoorAmbient = Color3.fromRGB(220,220,220)
+    end
+end)
+-- Place in MiscTab or MainTab
+local safeBubble = nil
+MiscTab:CreateToggle({
+    Name = "Safe Area Bubble",
+    CurrentValue = false,
+    Callback = function(v)
+        if v then
+            if not safeBubble and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                safeBubble = Instance.new("Part", workspace)
+                safeBubble.Shape = Enum.PartType.Ball
+                safeBubble.Anchored = false
+                safeBubble.CanCollide = true
+                safeBubble.Transparency = 0.6
+                safeBubble.Color = Color3.fromRGB(100,200,255)
+                safeBubble.Size = Vector3.new(8,8,8)
+                safeBubble.Massless = true
+                safeBubble.Name = "ShadowSafeBubble"
+                local weld = Instance.new("WeldConstraint", safeBubble)
+                weld.Part0 = player.Character.HumanoidRootPart
+                weld.Part1 = safeBubble
+                safeBubble.CFrame = player.Character.HumanoidRootPart.CFrame
+            end
+            popup("Safe Area Bubble ON", Color3.fromRGB(100,255,255))
+        else
+            if safeBubble then safeBubble:Destroy(); safeBubble = nil end
+            popup("Safe Area Bubble OFF", Color3.fromRGB(255,120,120))
+        end
+    end
+})
+-- Place in MainTab or Utility/ESP tab
+local tapGrab = false
+MainTab:CreateToggle({
+    Name = "Tap to Grab Items",
+    CurrentValue = false,
+    Callback = function(v)
+        tapGrab = v
+        popup("Tap-to-Grab "..(v and "Enabled" or "Disabled"), v and Color3.fromRGB(255,255,140) or Color3.fromRGB(255,100,100))
+    end
+})
+
+local UIS = game:GetService("UserInputService")
+local mouse = player:GetMouse()
+UIS.InputBegan:Connect(function(input, gpe)
+    if tapGrab and input.UserInputType == Enum.UserInputType.Touch then
+        local target = mouse.Target
+        if target and target:IsA("BasePart") then
+            local toolParent = target.Parent
+            if toolParent and toolParent:IsA("Tool") then
+                toolParent.Parent = player.Backpack
+                popup("Grabbed "..toolParent.Name, Color3.fromRGB(255,255,140))
+            elseif target:IsA("BasePart") then
+                target.Parent = player.Backpack
+                popup("Grabbed "..target.Name, Color3.fromRGB(220,255,120))
+            end
+        end
+    end
+end)
+----------------- FIXED FOV CIRCLE (CENTERED) & IMPROVED ZOMBIE ESP ------------------
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local camera = workspace.CurrentCamera
+local player = Players.LocalPlayer
+
+-- === FOV CIRCLE (ALWAYS CENTERED) ===
+local FOV_RADIUS = 120
+local FOV_CENTER_FUNC = function()
+    return Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 2)
 end
 
--- Super Jump request
-UserInputService.JumpRequest:Connect(function()
-    -- handled inside Movement tab
+local fovCircle = Drawing.new("Circle")
+fovCircle.Radius = FOV_RADIUS
+fovCircle.Transparency = 0.34
+fovCircle.Color = Color3.fromRGB(90,180,255)
+fovCircle.Thickness = 3
+fovCircle.Filled = false
+fovCircle.Visible = true
+
+local playerArrows = {}
+
+RunService.RenderStepped:Connect(function()
+    -- Center circle every frame for resolution changes
+    local center = FOV_CENTER_FUNC()
+    fovCircle.Position = center
+    -- Remove old arrows
+    for _, arr in ipairs(playerArrows) do arr.Visible = false; arr:Remove() end
+    table.clear(playerArrows)
+    local lpChar = player.Character
+    if not lpChar or not lpChar:FindFirstChild("HumanoidRootPart") then return end
+    local myPos = lpChar.HumanoidRootPart.Position
+
+    for _, pl in ipairs(Players:GetPlayers()) do
+        if pl ~= player and pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
+            local theirPos = pl.Character.HumanoidRootPart.Position
+            local v3, onScreen = camera:WorldToViewportPoint(theirPos)
+            local screenVec = Vector2.new(v3.X, v3.Y)
+            if onScreen then
+                local dist = (screenVec - center).Magnitude
+                if dist > FOV_RADIUS then
+                    local dir = (screenVec - center).Unit
+                    local arrowBase = center + dir * FOV_RADIUS
+                    local arrowTip = center + dir * (FOV_RADIUS + 32)
+                    local arr = Drawing.new("Line")
+                    arr.From = arrowBase
+                    arr.To = arrowTip
+                    arr.Thickness = 5
+                    arr.Color = Color3.fromHSV((pl.UserId%360)/360, 1, 1)
+                    arr.Transparency = 0.82
+                    arr.Visible = true
+                    table.insert(playerArrows, arr)
+                    local label = Drawing.new("Text")
+                    label.Position = arrowTip + Vector2.new(0, -24)
+                    label.Text = pl.Name
+                    label.Font = 2
+                    label.Size = 14
+                    label.Center = true
+                    label.Outline = true
+                    label.Color = arr.Color
+                    label.Transparency = 0.92
+                    label.Visible = true
+                    table.insert(playerArrows, label)
+                end
+            end
+        end
+    end
 end)
 
--- Menu always open on start
-menu.Visible = true
-miniBtn.Visible = false
+-- === ADVANCED ZOMBIE ESP (anything living except me or another player) ===
+
+local function isPlayerModel(model)
+    if not model:IsA("Model") then return false end
+    local hum = model:FindFirstChildOfClass("Humanoid")
+    if not hum then return false end
+    for _,pl in ipairs(Players:GetPlayers()) do
+        if pl.Character == model then return true end
+    end
+    return false
+end
+
+local zombieESPEnabled = false
+ESPTab:CreateToggle({
+    Name = "Zombie ESP (Living NPCs)",
+    CurrentValue = false,
+    Callback = function(v)
+        zombieESPEnabled = v
+        popup("Zombie ESP "..(v and "Enabled" or "Disabled"), v and Color3.fromRGB(255,255,120) or Color3.fromRGB(255,100,100))
+    end
+})
+
+local zombieDraws = {}
+
+RunService.RenderStepped:Connect(function()
+    -- Clear all
+    for _,draw in pairs(zombieDraws) do if draw.Text then draw.Text:Remove() end if draw.Line then draw.Line:Remove() end end
+    table.clear(zombieDraws)
+    if not zombieESPEnabled then return end
+
+    local lpChar = player.Character
+    local myPos = lpChar and lpChar:FindFirstChild("HumanoidRootPart") and lpChar.HumanoidRootPart.Position or Vector3.zero
+    for _, model in ipairs(workspace:GetDescendants()) do
+        if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid")
+            and not isPlayerModel(model)
+            and model:FindFirstChild("HumanoidRootPart") then
+            local part = model.HumanoidRootPart
+            local cam = workspace.CurrentCamera
+            local screenPos, visible = cam:WorldToViewportPoint(part.Position)
+            if visible then
+                local txt = Drawing.new("Text")
+                txt.Text = "LIVING"
+                txt.Position = Vector2.new(screenPos.X, screenPos.Y - 16)
+                txt.Size = 15
+                txt.Center = true
+                txt.Outline = true
+                txt.Font = 2
+                txt.Color = Color3.fromRGB(240,255,100)
+                txt.Visible = true
+                local line = Drawing.new("Line")
+                line.From = Vector2.new(screenPos.X, screenPos.Y)
+                line.To = Vector2.new(screenPos.X, screenPos.Y + 28)
+                line.Color = Color3.fromRGB(255, 220, 60)
+                line.Thickness = 2
+                line.Visible = true
+                table.insert(zombieDraws, {Text = txt, Line = line})
+            end
+        end
+    end
+end)
