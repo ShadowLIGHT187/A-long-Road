@@ -1478,3 +1478,159 @@ AimbotTab:CreateParagraph({
 })
 
 ------------------ END RAYFIELD AIMBOT TAB ------------------
+---------------------- RAYFIELD AIMBOT TAB: PLAYER & ZOMBIE AIMBOT ----------------------
+
+-- Create a new Aimbot tab if you haven't yet
+local AimbotTab = Window:CreateTab("Aimbot", 4483362458)
+
+-- Settings
+getgenv().AimbotSettings = getgenv().AimbotSettings or {
+    PlayerAimbot = false,
+    ZombieAimbot = false,
+    FOV = 180,
+    Smoothness = 0.25, -- 0 = instant, 1 = super slow
+    Range = 900
+}
+
+local Players = game:GetService("Players")
+local Camera = workspace.CurrentCamera
+local player = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+-- Utility: is player character?
+local function isPlayerModel(model)
+    for _, pl in ipairs(Players:GetPlayers()) do
+        if pl.Character == model then return true end
+    end
+    return false
+end
+
+-- Utility: find closest player (not self)
+local function getClosestPlayer()
+    local lpChar = player.Character
+    local lpPos = lpChar and lpChar:FindFirstChild("HumanoidRootPart") and lpChar.HumanoidRootPart.Position or Vector3.zero
+    local minDist, target = math.huge, nil
+    for _, pl in ipairs(Players:GetPlayers()) do
+        if pl ~= player and pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
+            local pos = pl.Character.HumanoidRootPart.Position
+            local dist = (lpPos - pos).Magnitude
+            local screenPos, visible = Camera:WorldToViewportPoint(pos)
+            if dist < minDist and dist < AimbotSettings.Range and visible then
+                minDist, target = dist, pos
+            end
+        end
+    end
+    return target
+end
+
+-- Utility: find closest zombie (anything humanoid, not a player)
+local function getClosestZombie()
+    local lpChar = player.Character
+    local lpPos = lpChar and lpChar:FindFirstChild("HumanoidRootPart") and lpChar.HumanoidRootPart.Position or Vector3.zero
+    local minDist, target = math.huge, nil
+    for _, model in ipairs(workspace:GetDescendants()) do
+        if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid") and not isPlayerModel(model) and model:FindFirstChild("HumanoidRootPart") then
+            local pos = model.HumanoidRootPart.Position
+            local dist = (lpPos - pos).Magnitude
+            local screenPos, visible = Camera:WorldToViewportPoint(pos)
+            if dist < minDist and dist < AimbotSettings.Range and visible then
+                minDist, target = dist, pos
+            end
+        end
+    end
+    return target
+end
+
+-- FOV Circle (visual)
+local fov_circle = Drawing.new("Circle")
+fov_circle.Thickness = 1
+fov_circle.NumSides = 100
+fov_circle.Radius = AimbotSettings.FOV
+fov_circle.Filled = false
+fov_circle.Visible = true
+fov_circle.ZIndex = 999
+fov_circle.Transparency = 1
+fov_circle.Color = Color3.fromRGB(200, 200, 255)
+
+RunService.RenderStepped:Connect(function()
+    fov_circle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    fov_circle.Visible = true
+    fov_circle.Radius = AimbotSettings.FOV
+
+    -- Aimbot logic
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
+    local targetPos = nil
+    -- Prefer whichever is closer if both toggled
+    local playerPos = AimbotSettings.PlayerAimbot and getClosestPlayer() or nil
+    local zombiePos = AimbotSettings.ZombieAimbot and getClosestZombie() or nil
+    if playerPos and zombiePos then
+        local lpPos = player.Character.HumanoidRootPart.Position
+        if (lpPos - playerPos).Magnitude < (lpPos - zombiePos).Magnitude then
+            targetPos = playerPos
+        else
+            targetPos = zombiePos
+        end
+    else
+        targetPos = playerPos or zombiePos
+    end
+
+    if targetPos then
+        local cam = Camera
+        local newCF = CFrame.new(cam.CFrame.Position, targetPos)
+        cam.CFrame = cam.CFrame:Lerp(newCF, 1 - AimbotSettings.Smoothness)
+    end
+end)
+
+AimbotTab:CreateSection("Aimbot")
+AimbotTab:CreateToggle({
+    Name = "Aimbot (Players)",
+    CurrentValue = AimbotSettings.PlayerAimbot,
+    Callback = function(v)
+        AimbotSettings.PlayerAimbot = v
+        if popup then popup("Player Aimbot "..(v and "ON" or "OFF")) end
+    end
+})
+AimbotTab:CreateToggle({
+    Name = "Aimbot (Zombies)",
+    CurrentValue = AimbotSettings.ZombieAimbot,
+    Callback = function(v)
+        AimbotSettings.ZombieAimbot = v
+        if popup then popup("Zombie Aimbot "..(v and "ON" or "OFF")) end
+    end
+})
+AimbotTab:CreateSlider({
+    Name = "Aimbot FOV",
+    Range = {40, 400},
+    Increment = 1,
+    Suffix = "px",
+    CurrentValue = AimbotSettings.FOV,
+    Callback = function(val)
+        AimbotSettings.FOV = val
+    end
+})
+AimbotTab:CreateSlider({
+    Name = "Smoothness",
+    Range = {0, 1},
+    Increment = 0.01,
+    Suffix = "",
+    CurrentValue = AimbotSettings.Smoothness,
+    Callback = function(val)
+        AimbotSettings.Smoothness = val
+    end
+})
+AimbotTab:CreateSlider({
+    Name = "Range",
+    Range = {100, 2000},
+    Increment = 10,
+    Suffix = "m",
+    CurrentValue = AimbotSettings.Range,
+    Callback = function(val)
+        AimbotSettings.Range = val
+    end
+})
+AimbotTab:CreateParagraph({
+    Title = "How it Works",
+    Content = "Aimbot locks your camera smoothly to the nearest player or zombie, depending on which toggles are enabled. Adjust FOV, range, and smoothness to taste. (Works on mobile and PC!)"
+})
+
+---------------------- END RAYFIELD PLAYER+ZOMBIE AIMBOT ----------------------
