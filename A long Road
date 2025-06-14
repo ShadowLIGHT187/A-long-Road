@@ -1239,6 +1239,118 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
+--------------------- AIMBOT FOR PLAYERS & ZOMBIES (BOTH TOGGLABLE) ---------------------
+
+local ESPTab = ESPTab or (Rayfield and Rayfield.Tabs and Rayfield.Tabs["ESP+"] or nil)
+local Players = game:GetService("Players")
+local Camera = workspace.CurrentCamera
+local player = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+_G.aimbotPlayers = _G.aimbotPlayers or false
+_G.aimbotZombies = _G.aimbotZombies or false
+local aimbotRange = 600 -- studs
+
+if ESPTab and ESPTab.CreateToggle then
+    ESPTab:CreateToggle({
+        Name = "Aimbot (Players)",
+        CurrentValue = _G.aimbotPlayers,
+        Callback = function(v)
+            _G.aimbotPlayers = v
+            if popup then popup("Aimbot Players "..(v and "ON" or "OFF")) end
+        end
+    })
+    ESPTab:CreateToggle({
+        Name = "Aimbot (Zombies)",
+        CurrentValue = _G.aimbotZombies,
+        Callback = function(v)
+            _G.aimbotZombies = v
+            if popup then popup("Aimbot Zombies "..(v and "ON" or "OFF")) end
+        end
+    })
+end
+
+local function isPlayerModel(model)
+    if not model:IsA("Model") then return false end
+    local hum = model:FindFirstChildOfClass("Humanoid")
+    if not hum then return false end
+    for _,pl in ipairs(Players:GetPlayers()) do
+        if pl.Character == model then return true end
+    end
+    return false
+end
+
+local function getClosestTarget(mode)
+    local lpChar = player.Character
+    local lpPos = lpChar and lpChar:FindFirstChild("HumanoidRootPart") and lpChar.HumanoidRootPart.Position or Vector3.zero
+    local camPos = Camera.CFrame.Position
+    local minDist, target = math.huge, nil
+    if mode == "player" then
+        for _,pl in ipairs(Players:GetPlayers()) do
+            if pl ~= player and pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
+                local pos = pl.Character.HumanoidRootPart.Position
+                local dist = (lpPos - pos).Magnitude
+                if dist < minDist and dist < aimbotRange then
+                    -- Only consider if on screen
+                    local _, visible = Camera:WorldToViewportPoint(pos)
+                    if visible then
+                        minDist, target = dist, pos
+                    end
+                end
+            end
+        end
+    elseif mode == "zombie" then
+        for _,model in ipairs(workspace:GetDescendants()) do
+            if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid")
+            and not isPlayerModel(model)
+            and model:FindFirstChild("HumanoidRootPart") then
+                local pos = model.HumanoidRootPart.Position
+                local dist = (lpPos - pos).Magnitude
+                if dist < minDist and dist < aimbotRange then
+                    local _, visible = Camera:WorldToViewportPoint(pos)
+                    if visible then
+                        minDist, target = dist, pos
+                    end
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- Aimbot loop: moves camera smoothly toward nearest eligible target
+RunService.RenderStepped:Connect(function()
+    if _G.aimbotPlayers or _G.aimbotZombies then
+        local lpChar = player.Character
+        if not lpChar or not lpChar:FindFirstChild("HumanoidRootPart") then return end
+
+        local targetPos = nil
+        if _G.aimbotPlayers then
+            targetPos = getClosestTarget("player")
+        elseif _G.aimbotZombies then
+            targetPos = getClosestTarget("zombie")
+        end
+        -- If both toggled, prefer whichever is closer
+        if _G.aimbotPlayers and _G.aimbotZombies then
+            local p = getClosestTarget("player")
+            local z = getClosestTarget("zombie")
+            if p and z then
+                targetPos = ((lpChar.HumanoidRootPart.Position-p).Magnitude < (lpChar.HumanoidRootPart.Position-z).Magnitude) and p or z
+            else
+                targetPos = p or z
+            end
+        end
+
+        if targetPos then
+            -- Smooth camera movement (works with mouse/touch and doesn't snap harshly)
+            local cam = Camera
+            local newCF = CFrame.new(cam.CFrame.Position, targetPos)
+            cam.CFrame = cam.CFrame:Lerp(newCF, 0.30)
+        end
+    end
+end)
+
 
 
 
