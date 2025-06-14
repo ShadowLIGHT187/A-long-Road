@@ -1076,3 +1076,169 @@ RunService.RenderStepped:Connect(function()
     dangerRadarText.Position = Vector2.new(Camera.ViewportSize.X/2, 60)
     dangerRadarText.Visible = _G.showDangerRadar and danger or false
 end)
+---------------------- ZA WARUDO: TIME STOP ----------------------
+
+local ESPTab = ESPTab or (Rayfield and Rayfield.Tabs and Rayfield.Tabs["ESP+"] or nil)
+
+if ESPTab and ESPTab.CreateButton then
+    ESPTab:CreateButton({
+        Name = "Time Stop (5s)",
+        Callback = function()
+            local frozen = {}
+            for _,model in ipairs(workspace:GetDescendants()) do
+                if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid") and not isPlayerModel(model) and model:FindFirstChild("HumanoidRootPart") then
+                    local hum = model:FindFirstChildOfClass("Humanoid")
+                    hum.WalkSpeed = 0
+                    hum.JumpPower = 0
+                    table.insert(frozen, hum)
+                end
+            end
+            if popup then popup("ZA WARUDO! Time stopped!", Color3.fromRGB(255,255,120)) end
+            task.spawn(function()
+                wait(5)
+                for _,hum in ipairs(frozen) do
+                    if hum and hum.Parent then
+                        hum.WalkSpeed = 16
+                        hum.JumpPower = 50
+                    end
+                end
+                if popup then popup("Time flows again...", Color3.fromRGB(140,255,255)) end
+            end)
+        end
+    })
+end
+---------------------- TRUE GODMODE (INSTANT HEAL) ----------------------
+
+local ESPTab = ESPTab or (Rayfield and Rayfield.Tabs and Rayfield.Tabs["ESP+"] or nil)
+_G.showGodmode = _G.showGodmode ~= false
+
+if ESPTab and ESPTab.CreateToggle then
+    ESPTab:CreateToggle({
+        Name = "True Godmode",
+        CurrentValue = _G.showGodmode,
+        Callback = function(v)
+            _G.showGodmode = v
+            if popup then popup("Godmode "..(v and "ON" or "OFF")) end
+        end
+    })
+end
+
+local player = game:GetService("Players").LocalPlayer
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    if not _G.showGodmode then return end
+    local char = player.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if hum and hum.Health < hum.MaxHealth then
+        hum.Health = hum.MaxHealth
+    end
+end)
+---------------------- EMP PULSE: STUN ALL CARS ----------------------
+
+local ESPTab = ESPTab or (Rayfield and Rayfield.Tabs and Rayfield.Tabs["ESP+"] or nil)
+
+if ESPTab and ESPTab.CreateButton then
+    ESPTab:CreateButton({
+        Name = "EMP Pulse (Disable All Cars 5s)",
+        Callback = function()
+            local stunned = {}
+            for _,model in ipairs(workspace:GetDescendants()) do
+                if model:IsA("Model") and (model.Name:lower():find("car") or model.Name:lower():find("vehicle")) and model:FindFirstChildWhichIsA("VehicleSeat") then
+                    for _,seat in ipairs(model:GetDescendants()) do
+                        if seat:IsA("VehicleSeat") then
+                            seat.Disabled = true
+                            table.insert(stunned, seat)
+                        end
+                    end
+                end
+            end
+            if popup then popup("EMP! All cars disabled.", Color3.fromRGB(90,200,255)) end
+            wait(5)
+            for _,seat in ipairs(stunned) do
+                if seat and seat.Parent then seat.Disabled = false end
+            end
+            if popup then popup("EMP over. Cars restored.", Color3.fromRGB(180,255,140)) end
+        end
+    })
+end
+------------------- ZOMBIE ESP: SHOW DISTANCE BELOW NAME -------------------
+
+local Players = game:GetService("Players")
+local Camera = workspace.CurrentCamera
+local player = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+local function isPlayerModel(model)
+    if not model:IsA("Model") then return false end
+    local hum = model:FindFirstChildOfClass("Humanoid")
+    if not hum then return false end
+    for _,pl in ipairs(Players:GetPlayers()) do
+        if pl.Character == model then return true end
+    end
+    return false
+end
+
+local zombieESPDraws = {}
+
+RunService.RenderStepped:Connect(function()
+    for _,draw in ipairs(zombieESPDraws) do
+        if draw.Name then draw.Name:Remove() end
+        if draw.Dist then draw.Dist:Remove() end
+        if draw.Line then draw.Line:Remove() end
+    end
+    table.clear(zombieESPDraws)
+
+    local lpChar = player.Character
+    local lpPos = lpChar and lpChar:FindFirstChild("HumanoidRootPart") and lpChar.HumanoidRootPart.Position or Vector3.zero
+    local espDistance = _G.espDistance or 1500  -- Use your global or menu slider value
+
+    for _, model in ipairs(workspace:GetDescendants()) do
+        if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid")
+            and not isPlayerModel(model)
+            and model:FindFirstChild("HumanoidRootPart") then
+            local part = model.HumanoidRootPart
+            local dist = (lpPos - part.Position).Magnitude
+            if dist <= espDistance then
+                local screenPos, visible = Camera:WorldToViewportPoint(part.Position)
+                if visible then
+                    -- Zombie name (red)
+                    local txt = Drawing.new("Text")
+                    txt.Text = "Zombie"
+                    txt.Position = Vector2.new(screenPos.X, screenPos.Y - 16)
+                    txt.Size = 15
+                    txt.Center = true
+                    txt.Outline = true
+                    txt.Font = 2
+                    txt.Color = Color3.fromRGB(255,80,80)
+                    txt.Visible = true
+
+                    -- Distance (small white letters)
+                    local distText = Drawing.new("Text")
+                    distText.Text = string.format("%.0fm", dist)
+                    distText.Position = Vector2.new(screenPos.X, screenPos.Y + 2)
+                    distText.Size = 12
+                    distText.Center = true
+                    distText.Outline = true
+                    distText.Font = 2
+                    distText.Color = Color3.fromRGB(230,230,230)
+                    distText.Visible = true
+
+                    -- Optional: If you want to also show a snapline, add it here (or leave out if you already have)
+                    --[[
+                    local line = Drawing.new("Line")
+                    line.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
+                    line.To = Vector2.new(screenPos.X, screenPos.Y)
+                    line.Thickness = 2
+                    line.Color = Color3.fromRGB(255, 80, 80)
+                    line.Visible = true
+                    --]]
+
+                    table.insert(zombieESPDraws, {Name = txt, Dist = distText})
+                end
+            end
+        end
+    end
+end)
+
+
+
