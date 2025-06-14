@@ -1350,7 +1350,131 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
+------------------ RAYFIELD AIMBOT TAB: SILENT AIM PLAYERS/ZOMBIES ------------------
 
+-- Make a new tab for Aimbot (change icon if you want)
+local AimbotTab = Window:CreateTab("Aimbot", 4483362458)
 
+getgenv().SilentAimSettings = getgenv().SilentAimSettings or {
+    Enabled = false,
+    ZombieSilentAim = false,
+    TargetPart = "HumanoidRootPart",
+    FOVRadius = 130,
+    FOVVisible = false
+}
 
+local Players = game:GetService("Players")
+local Camera = workspace.CurrentCamera
+local player = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local Mouse = player:GetMouse()
+local aimbotRange = 800
 
+-- Utility: checks if model is a player character
+local function isPlayerModel(model)
+    for _, pl in ipairs(Players:GetPlayers()) do
+        if pl.Character == model then return true end
+    end
+    return false
+end
+
+-- Get closest target (player or zombie)
+local function getClosestTarget()
+    local lpChar = player.Character
+    local lpPos = lpChar and lpChar:FindFirstChild("HumanoidRootPart") and lpChar.HumanoidRootPart.Position or Vector3.zero
+    local minDist, target = math.huge, nil
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") and obj:FindFirstChild("HumanoidRootPart") then
+            local isPlayer = isPlayerModel(obj) and obj ~= player.Character
+            local isZombie = not isPlayerModel(obj)
+            if (SilentAimSettings.Enabled and isPlayer) or (SilentAimSettings.ZombieSilentAim and isZombie) then
+                local hrp = obj.HumanoidRootPart
+                local dist = (lpPos - hrp.Position).Magnitude
+                local _, visible = Camera:WorldToViewportPoint(hrp.Position)
+                if dist < minDist and dist < aimbotRange and visible then
+                    minDist, target = dist, hrp
+                end
+            end
+        end
+    end
+    return target
+end
+
+-- Silent Aim Hook (universal for Mouse.Hit/Target and Raycast)
+local oldIndex = nil
+oldIndex = hookmetamethod(game, "__index", function(self, key)
+    if not checkcaller() and (key == "Hit" or key == "Target") and typeof(self) == "Instance" and self:IsA("Mouse") then
+        local target = getClosestTarget()
+        if target then
+            if key == "Hit" then
+                return CFrame.new(target.Position)
+            elseif key == "Target" then
+                return target
+            end
+        end
+    end
+    return oldIndex(self, key)
+end)
+
+-- FOV Circle
+local fov_circle = Drawing.new("Circle")
+fov_circle.Thickness = 1
+fov_circle.NumSides = 100
+fov_circle.Radius = SilentAimSettings.FOVRadius
+fov_circle.Filled = false
+fov_circle.Visible = SilentAimSettings.FOVVisible
+fov_circle.ZIndex = 999
+fov_circle.Transparency = 1
+fov_circle.Color = Color3.fromRGB(255, 60, 100)
+
+RunService.RenderStepped:Connect(function()
+    if fov_circle then
+        fov_circle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+        fov_circle.Visible = SilentAimSettings.FOVVisible
+        fov_circle.Radius = SilentAimSettings.FOVRadius
+    end
+end)
+
+-- AimbotTab GUI
+AimbotTab:CreateSection("Silent Aim Settings")
+
+AimbotTab:CreateToggle({
+    Name = "Silent Aim (Players)",
+    CurrentValue = SilentAimSettings.Enabled,
+    Callback = function(v)
+        SilentAimSettings.Enabled = v
+        if popup then popup("Silent Aim Players "..(v and "ON" or "OFF")) end
+    end
+})
+AimbotTab:CreateToggle({
+    Name = "Silent Aim (Zombies)",
+    CurrentValue = SilentAimSettings.ZombieSilentAim,
+    Callback = function(v)
+        SilentAimSettings.ZombieSilentAim = v
+        if popup then popup("Silent Aim Zombies "..(v and "ON" or "OFF")) end
+    end
+})
+AimbotTab:CreateToggle({
+    Name = "Show FOV Circle",
+    CurrentValue = SilentAimSettings.FOVVisible,
+    Callback = function(v)
+        SilentAimSettings.FOVVisible = v
+    end
+})
+AimbotTab:CreateSlider({
+    Name = "FOV Radius",
+    Range = {40, 500},
+    Increment = 1,
+    Suffix = "px",
+    CurrentValue = SilentAimSettings.FOVRadius,
+    Callback = function(val)
+        SilentAimSettings.FOVRadius = val
+    end
+})
+
+AimbotTab:CreateParagraph({
+    Title = "How it Works",
+    Content = "Silent Aim makes all shots hit the nearest player or zombie in your FOV (depending on which toggles are ON). Works for most Mouse.Hit-based shooters. FOV is just visual."
+})
+
+------------------ END RAYFIELD AIMBOT TAB ------------------
