@@ -407,40 +407,7 @@ MiscTab:CreateToggle({
         end
     end
 })
------------------- AUTO DUPLICATE TOUCHING ITEMS (PASTE BELOW) ------------------
 
-local player = game:GetService("Players").LocalPlayer
-
-RunService.RenderStepped:Connect(function()
-    local char = player.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local hrp = char.HumanoidRootPart
-    for _, obj in pairs(workspace:GetDescendants()) do
-        -- Only duplicate items/tools/parts not already belonging to the player
-        if obj:IsA("BasePart") and not obj:IsDescendantOf(char) then
-            -- BoundingBox touch check
-            if (obj.Position - hrp.Position).Magnitude < ((obj.Size.Magnitude + hrp.Size.Magnitude) / 2) + 2 then
-                -- For tools in workspace
-                local tool = obj.Parent
-                if tool and tool:IsA("Tool") and tool.Parent == workspace then
-                    if not tool:FindFirstChild("__Duped") then
-                        local clone = tool:Clone()
-                        clone.Parent = workspace
-                        -- Mark original as duplicated so we don't spam duplicates
-                        Instance.new("BoolValue", tool).Name = "__Duped"
-                        popup("Duplicated "..tool.Name, Color3.fromRGB(200,255,60))
-                    end
-                -- For loose parts (loot, etc)
-                elseif not obj:FindFirstChild("__Duped") and not (tool and tool:IsA("Tool")) then
-                    local clone = obj:Clone()
-                    clone.Parent = workspace
-                    Instance.new("BoolValue", obj).Name = "__Duped"
-                    popup("Duplicated "..obj.Name, Color3.fromRGB(255,220,60))
-                end
-            end
-        end
-    end
-end)
 ------------------ SHADOW'S ADVANCED ADDONS (A LONG DRIVE) ------------------
 
 local RunService = game:GetService("RunService")
@@ -580,49 +547,7 @@ MiscTab:CreateToggle({
         end
     end
 })
--- Place in MainTab, TeleTab, or your Utility tab
-local autoCollect = false
-MainTab:CreateToggle({
-    Name = "Auto Collect Nearby Fuel",
-    CurrentValue = false,
-    Callback = function(v)
-        autoCollect = v
-        popup("Auto-Collect "..(v and "Enabled" or "Disabled"), v and Color3.fromRGB(255,255,120) or Color3.fromRGB(255,80,80))
-    end
-})
 
-RunService.RenderStepped:Connect(function()
-    if not autoCollect then return end
-    local char = player.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    local hrp = char.HumanoidRootPart
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") and obj.Name:lower():find("fuel") and (obj.Position - hrp.Position).Magnitude < 10 then
-            if obj.Parent and obj.Parent:IsA("Tool") then
-                obj.Parent.Parent = player.Backpack
-                popup("Picked up fuel!", Color3.fromRGB(255,220,70))
-            end
-        end
-    end
-end)
--- Place in MiscTab or ESPTab
-local rainbowCar = false
-MiscTab:CreateToggle({
-    Name = "Rainbow Vehicle Paint",
-    CurrentValue = false,
-    Callback = function(v) rainbowCar = v; popup("Rainbow Car "..(v and "Enabled" or "Disabled")) end
-})
-RunService.RenderStepped:Connect(function()
-    if rainbowCar and player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-        local seat = player.Character.Humanoid.SeatPart
-        if seat and seat:IsA("VehicleSeat") and seat.Parent then
-            local col = Color3.fromHSV((tick()/2)%1,1,1)
-            for _,p in pairs(seat.Parent:GetDescendants()) do
-                if p:IsA("BasePart") then p.Color = col end
-            end
-        end
-    end
-end)
 -- Add to ESPTab
 local espGas, espWater, espFood = false, false, false
 ESPTab:CreateToggle({Name="Gas ESP",CurrentValue=false,Callback=function(v) espGas=v; popup("Gas ESP "..(v and "On" or "Off")) end})
@@ -699,63 +624,7 @@ RunService.RenderStepped:Connect(function()
         Lighting.OutdoorAmbient = Color3.fromRGB(220,220,220)
     end
 end)
--- Place in MiscTab or MainTab
-local safeBubble = nil
-MiscTab:CreateToggle({
-    Name = "Safe Area Bubble",
-    CurrentValue = false,
-    Callback = function(v)
-        if v then
-            if not safeBubble and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                safeBubble = Instance.new("Part", workspace)
-                safeBubble.Shape = Enum.PartType.Ball
-                safeBubble.Anchored = false
-                safeBubble.CanCollide = true
-                safeBubble.Transparency = 0.6
-                safeBubble.Color = Color3.fromRGB(100,200,255)
-                safeBubble.Size = Vector3.new(8,8,8)
-                safeBubble.Massless = true
-                safeBubble.Name = "ShadowSafeBubble"
-                local weld = Instance.new("WeldConstraint", safeBubble)
-                weld.Part0 = player.Character.HumanoidRootPart
-                weld.Part1 = safeBubble
-                safeBubble.CFrame = player.Character.HumanoidRootPart.CFrame
-            end
-            popup("Safe Area Bubble ON", Color3.fromRGB(100,255,255))
-        else
-            if safeBubble then safeBubble:Destroy(); safeBubble = nil end
-            popup("Safe Area Bubble OFF", Color3.fromRGB(255,120,120))
-        end
-    end
-})
--- Place in MainTab or Utility/ESP tab
-local tapGrab = false
-MainTab:CreateToggle({
-    Name = "Tap to Grab Items",
-    CurrentValue = false,
-    Callback = function(v)
-        tapGrab = v
-        popup("Tap-to-Grab "..(v and "Enabled" or "Disabled"), v and Color3.fromRGB(255,255,140) or Color3.fromRGB(255,100,100))
-    end
-})
 
-local UIS = game:GetService("UserInputService")
-local mouse = player:GetMouse()
-UIS.InputBegan:Connect(function(input, gpe)
-    if tapGrab and input.UserInputType == Enum.UserInputType.Touch then
-        local target = mouse.Target
-        if target and target:IsA("BasePart") then
-            local toolParent = target.Parent
-            if toolParent and toolParent:IsA("Tool") then
-                toolParent.Parent = player.Backpack
-                popup("Grabbed "..toolParent.Name, Color3.fromRGB(255,255,140))
-            elseif target:IsA("BasePart") then
-                target.Parent = player.Backpack
-                popup("Grabbed "..target.Name, Color3.fromRGB(220,255,120))
-            end
-        end
-    end
-end)
 ----------------- FIXED FOV CIRCLE (CENTERED) & IMPROVED ZOMBIE ESP ------------------
 
 local Players = game:GetService("Players")
@@ -826,7 +695,283 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- === ADVANCED ZOMBIE ESP (anything living except me or another player) ===
+--------------------- UNIVERSAL FOV CIRCLE & ARROWS (PLAYERS + ZOMBIES, MENU CONTROLLED) ---------------------
+
+-- Menu toggles (auto-create if Sirius/Rayfield is loaded)
+local ESPTab = ESPTab or (Rayfield and Rayfield.Tabs and Rayfield.Tabs["ESP+"] or nil)
+local popup = popup or function(msg, color) print(msg) end
+
+local espDistance = espDistance or 1500
+
+_G.showFovCircle = _G.showFovCircle ~= false
+_G.showPlayerArrows = _G.showPlayerArrows ~= false
+_G.showZombieArrows = _G.showZombieArrows ~= false
+
+if ESPTab and ESPTab.CreateToggle then
+    ESPTab:CreateToggle({
+        Name = "Show FOV Circle",
+        CurrentValue = _G.showFovCircle,
+        Callback = function(v) _G.showFovCircle = v; if popup then popup("FOV Circle "..(v and "ON" or "OFF")) end end
+    })
+    ESPTab:CreateToggle({
+        Name = "Player FOV Arrows",
+        CurrentValue = _G.showPlayerArrows,
+        Callback = function(v) _G.showPlayerArrows = v; if popup then popup("Player FOV Arrows "..(v and "ON" or "OFF")) end end
+    })
+    ESPTab:CreateToggle({
+        Name = "Zombie FOV Arrows",
+        CurrentValue = _G.showZombieArrows,
+        Callback = function(v) _G.showZombieArrows = v; if popup then popup("Zombie FOV Arrows "..(v and "ON" or "OFF")) end end
+    })
+end
+
+local Players = game:GetService("Players")
+local Camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+
+local FOV_RADIUS = 120
+local function FOV_CENTER()
+    return Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+end
+
+local fovCircle = Drawing.new("Circle")
+fovCircle.Radius = FOV_RADIUS
+fovCircle.Transparency = 0.34
+fovCircle.Color = Color3.fromRGB(90,180,255)
+fovCircle.Thickness = 3
+fovCircle.Filled = false
+fovCircle.Visible = _G.showFovCircle
+
+local fovArrows = {}
+
+-- Helper: isPlayerModel
+local function isPlayerModel(model)
+    if not model:IsA("Model") then return false end
+    local hum = model:FindFirstChildOfClass("Humanoid")
+    if not hum then return false end
+    for _,pl in ipairs(Players:GetPlayers()) do
+        if pl.Character == model then return true end
+    end
+    return false
+end
+
+RunService.RenderStepped:Connect(function()
+    local center = FOV_CENTER()
+    fovCircle.Position = center
+    fovCircle.Visible = _G.showFovCircle
+
+    -- Remove old FOV arrows
+    for _, arr in ipairs(fovArrows) do
+        if arr.Line then arr.Line:Remove() end
+        if arr.Label then arr.Label:Remove() end
+    end
+    table.clear(fovArrows)
+
+    local lpChar = player.Character
+    local lpPos = lpChar and lpChar:FindFirstChild("HumanoidRootPart") and lpChar.HumanoidRootPart.Position or Vector3.zero
+
+    -- === PLAYER FOV ARROWS ===
+    if _G.showPlayerArrows then
+        for _, pl in ipairs(Players:GetPlayers()) do
+            if pl ~= player and pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
+                local part = pl.Character.HumanoidRootPart
+                local dist = (lpPos - part.Position).Magnitude
+                if dist <= espDistance then
+                    local screenPos, visible = Camera:WorldToViewportPoint(part.Position)
+                    if visible then
+                        local screenVec = Vector2.new(screenPos.X, screenPos.Y)
+                        local d = (screenVec - center).Magnitude
+                        if d > FOV_RADIUS then
+                            local dir = (screenVec - center).Unit
+                            local arrowBase = center + dir * FOV_RADIUS
+                            local arrowTip = center + dir * (FOV_RADIUS + 32)
+                            local arr = {}
+                            arr.Line = Drawing.new("Line")
+                            arr.Line.From = arrowBase
+                            arr.Line.To = arrowTip
+                            arr.Line.Thickness = 5
+                            arr.Line.Color = Color3.fromRGB(80,255,80)
+                            arr.Line.Transparency = 0.86
+                            arr.Line.Visible = true
+                            arr.Label = Drawing.new("Text")
+                            arr.Label.Position = arrowTip + Vector2.new(0, -24)
+                            arr.Label.Text = pl.Name
+                            arr.Label.Font = 2
+                            arr.Label.Size = 14
+                            arr.Label.Center = true
+                            arr.Label.Outline = true
+                            arr.Label.Color = arr.Line.Color
+                            arr.Label.Transparency = 0.94
+                            arr.Label.Visible = true
+                            table.insert(fovArrows, arr)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    -- === ZOMBIE FOV ARROWS ===
+    if _G.showZombieArrows then
+        for _, model in ipairs(workspace:GetDescendants()) do
+            if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid")
+                and not isPlayerModel(model)
+                and model:FindFirstChild("HumanoidRootPart") then
+                local part = model.HumanoidRootPart
+                local dist = (lpPos - part.Position).Magnitude
+                if dist <= espDistance then
+                    local screenPos, visible = Camera:WorldToViewportPoint(part.Position)
+                    if visible then
+                        local screenVec = Vector2.new(screenPos.X, screenPos.Y)
+                        local d = (screenVec - center).Magnitude
+                        if d > FOV_RADIUS then
+                            local dir = (screenVec - center).Unit
+                            local arrowBase = center + dir * FOV_RADIUS
+                            local arrowTip = center + dir * (FOV_RADIUS + 32)
+                            local arr = {}
+                            arr.Line = Drawing.new("Line")
+                            arr.Line.From = arrowBase
+                            arr.Line.To = arrowTip
+                            arr.Line.Thickness = 5
+                            arr.Line.Color = Color3.fromRGB(255,80,80)
+                            arr.Line.Transparency = 0.86
+                            arr.Line.Visible = true
+                            arr.Label = Drawing.new("Text")
+                            arr.Label.Position = arrowTip + Vector2.new(0, -24)
+                            arr.Label.Text = "Zombie"
+                            arr.Label.Font = 2
+                            arr.Label.Size = 14
+                            arr.Label.Center = true
+                            arr.Label.Outline = true
+                            arr.Label.Color = arr.Line.Color
+                            arr.Label.Transparency = 0.94
+                            arr.Label.Visible = true
+                            table.insert(fovArrows, arr)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+--------------------- ZOMBIE SNAPLINE ESP + MENU TOGGLE (PASTE AT END) ---------------------
+
+local ESPTab = ESPTab or (Rayfield and Rayfield.Tabs and Rayfield.Tabs["ESP+"] or nil)
+local popup = popup or function(msg, color) print(msg) end
+
+-- Control variables
+local espDistance = espDistance or 1500
+_G.showZombieSnaplines = _G.showZombieSnaplines ~= false
+
+-- Add toggle to menu if not already there
+if ESPTab and ESPTab.CreateToggle then
+    ESPTab:CreateToggle({
+        Name = "Zombie Snaplines",
+        CurrentValue = _G.showZombieSnaplines,
+        Callback = function(v)
+            _G.showZombieSnaplines = v
+            if popup then popup("Zombie Snaplines "..(v and "ON" or "OFF")) end
+        end
+    })
+end
+
+-- Helper: isPlayerModel
+local Players = game:GetService("Players")
+local function isPlayerModel(model)
+    if not model:IsA("Model") then return false end
+    local hum = model:FindFirstChildOfClass("Humanoid")
+    if not hum then return false end
+    for _,pl in ipairs(Players:GetPlayers()) do
+        if pl.Character == model then return true end
+    end
+    return false
+end
+
+local Camera = workspace.CurrentCamera
+local player = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+local zombieSnapDraws = {}
+
+RunService.RenderStepped:Connect(function()
+    -- Cleanup previous frame's lines/text
+    for _,draw in ipairs(zombieSnapDraws) do
+        if draw.Line then draw.Line:Remove() end
+        if draw.Text then draw.Text:Remove() end
+    end
+    table.clear(zombieSnapDraws)
+
+    if not _G.showZombieSnaplines then return end
+
+    local lpChar = player.Character
+    local lpPos = lpChar and lpChar:FindFirstChild("HumanoidRootPart") and lpChar.HumanoidRootPart.Position or Vector3.zero
+    local screenCenter = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y)
+
+    for _, model in ipairs(workspace:GetDescendants()) do
+        if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid")
+            and not isPlayerModel(model)
+            and model:FindFirstChild("HumanoidRootPart") then
+            local part = model.HumanoidRootPart
+            local dist = (lpPos - part.Position).Magnitude
+            if dist <= espDistance then
+                local screenPos, visible = Camera:WorldToViewportPoint(part.Position)
+                if visible then
+                    local line = Drawing.new("Line")
+                    line.From = screenCenter
+                    line.To = Vector2.new(screenPos.X, screenPos.Y)
+                    line.Thickness = 2
+                    line.Color = Color3.fromRGB(255, 80, 80)
+                    line.Visible = true
+
+                    local txt = Drawing.new("Text")
+                    txt.Text = "Zombie"
+                    txt.Position = Vector2.new(screenPos.X, screenPos.Y - 16)
+                    txt.Size = 15
+                    txt.Center = true
+                    txt.Outline = true
+                    txt.Font = 2
+                    txt.Color = Color3.fromRGB(255,80,80)
+                    txt.Visible = true
+
+                    table.insert(zombieSnapDraws, {Line = line, Text = txt})
+                end
+            end
+        end
+    end
+end)
+----------------------- HEALTH BAR ESP + DANGER RADAR (MENU-TOGGLABLE, DROP-IN) -----------------------
+
+local ESPTab = ESPTab or (Rayfield and Rayfield.Tabs and Rayfield.Tabs["ESP+"] or nil)
+local popup = popup or function(msg, color) print(msg) end
+
+_G.showHealthESP = _G.showHealthESP ~= false
+_G.showDangerRadar = _G.showDangerRadar ~= false
+local dangerDistance = 60 -- studs/meters for radar
+
+if ESPTab and ESPTab.CreateToggle then
+    ESPTab:CreateToggle({
+        Name = "Health Bar ESP",
+        CurrentValue = _G.showHealthESP,
+        Callback = function(v)
+            _G.showHealthESP = v
+            if popup then popup("Health Bar ESP "..(v and "ON" or "OFF")) end
+        end
+    })
+    ESPTab:CreateToggle({
+        Name = "Danger Radar",
+        CurrentValue = _G.showDangerRadar,
+        Callback = function(v)
+            _G.showDangerRadar = v
+            if popup then popup("Danger Radar "..(v and "ON" or "OFF")) end
+        end
+    })
+end
+
+local Players = game:GetService("Players")
+local Camera = workspace.CurrentCamera
+local player = Players.LocalPlayer
+local RunService = game:GetService("RunService")
 
 local function isPlayerModel(model)
     if not model:IsA("Model") then return false end
@@ -838,51 +983,96 @@ local function isPlayerModel(model)
     return false
 end
 
-local zombieESPEnabled = false
-ESPTab:CreateToggle({
-    Name = "Zombie ESP (Living NPCs)",
-    CurrentValue = false,
-    Callback = function(v)
-        zombieESPEnabled = v
-        popup("Zombie ESP "..(v and "Enabled" or "Disabled"), v and Color3.fromRGB(255,255,120) or Color3.fromRGB(255,100,100))
-    end
-})
+local healthDraws, dangerDraws = {}, {}
 
-local zombieDraws = {}
+-- Danger Radar Display
+local dangerRadarText = Drawing.new("Text")
+dangerRadarText.Text = "!! DANGER NEARBY !!"
+dangerRadarText.Size = 32
+dangerRadarText.Font = 3
+dangerRadarText.Center = true
+dangerRadarText.Outline = true
+dangerRadarText.Position = Vector2.new(Camera.ViewportSize.X/2, 60)
+dangerRadarText.Color = Color3.fromRGB(255,40,40)
+dangerRadarText.Visible = false
 
 RunService.RenderStepped:Connect(function()
-    -- Clear all
-    for _,draw in pairs(zombieDraws) do if draw.Text then draw.Text:Remove() end if draw.Line then draw.Line:Remove() end end
-    table.clear(zombieDraws)
-    if not zombieESPEnabled then return end
-
+    -- Clear old
+    for _,draw in ipairs(healthDraws) do if draw.Bar then draw.Bar:Remove() end if draw.BG then draw.BG:Remove() end end
+    table.clear(healthDraws)
     local lpChar = player.Character
-    local myPos = lpChar and lpChar:FindFirstChild("HumanoidRootPart") and lpChar.HumanoidRootPart.Position or Vector3.zero
-    for _, model in ipairs(workspace:GetDescendants()) do
-        if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid")
-            and not isPlayerModel(model)
-            and model:FindFirstChild("HumanoidRootPart") then
-            local part = model.HumanoidRootPart
-            local cam = workspace.CurrentCamera
-            local screenPos, visible = cam:WorldToViewportPoint(part.Position)
-            if visible then
-                local txt = Drawing.new("Text")
-                txt.Text = "LIVING"
-                txt.Position = Vector2.new(screenPos.X, screenPos.Y - 16)
-                txt.Size = 15
-                txt.Center = true
-                txt.Outline = true
-                txt.Font = 2
-                txt.Color = Color3.fromRGB(240,255,100)
-                txt.Visible = true
-                local line = Drawing.new("Line")
-                line.From = Vector2.new(screenPos.X, screenPos.Y)
-                line.To = Vector2.new(screenPos.X, screenPos.Y + 28)
-                line.Color = Color3.fromRGB(255, 220, 60)
-                line.Thickness = 2
-                line.Visible = true
-                table.insert(zombieDraws, {Text = txt, Line = line})
+    local lpPos = lpChar and lpChar:FindFirstChild("HumanoidRootPart") and lpChar.HumanoidRootPart.Position or Vector3.zero
+
+    -- Health Bar ESP
+    if _G.showHealthESP then
+        -- For players
+        for _, pl in ipairs(Players:GetPlayers()) do
+            if pl.Character and pl.Character:FindFirstChild("HumanoidRootPart") then
+                local part = pl.Character.HumanoidRootPart
+                local hum = pl.Character:FindFirstChildOfClass("Humanoid")
+                if hum then
+                    local screenPos, visible = Camera:WorldToViewportPoint(part.Position)
+                    if visible then
+                        local health = math.clamp(hum.Health/hum.MaxHealth,0,1)
+                        local barBG = Drawing.new("Line")
+                        barBG.From = Vector2.new(screenPos.X-25, screenPos.Y-30)
+                        barBG.To = Vector2.new(screenPos.X+25, screenPos.Y-30)
+                        barBG.Color = Color3.fromRGB(50,50,50)
+                        barBG.Thickness = 7
+                        barBG.Visible = true
+                        local bar = Drawing.new("Line")
+                        bar.From = Vector2.new(screenPos.X-25, screenPos.Y-30)
+                        bar.To = Vector2.new(screenPos.X-25+health*50, screenPos.Y-30)
+                        bar.Color = Color3.fromRGB(60+(1-health)*180,200*health,60)
+                        bar.Thickness = 5
+                        bar.Visible = true
+                        table.insert(healthDraws, {Bar = bar, BG = barBG})
+                    end
+                end
+            end
+        end
+        -- For zombies/living NPCs
+        for _, model in ipairs(workspace:GetDescendants()) do
+            if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid") and not isPlayerModel(model) and model:FindFirstChild("HumanoidRootPart") then
+                local part = model.HumanoidRootPart
+                local hum = model:FindFirstChildOfClass("Humanoid")
+                if hum then
+                    local screenPos, visible = Camera:WorldToViewportPoint(part.Position)
+                    if visible then
+                        local health = math.clamp(hum.Health/hum.MaxHealth,0,1)
+                        local barBG = Drawing.new("Line")
+                        barBG.From = Vector2.new(screenPos.X-25, screenPos.Y-30)
+                        barBG.To = Vector2.new(screenPos.X+25, screenPos.Y-30)
+                        barBG.Color = Color3.fromRGB(60,0,0)
+                        barBG.Thickness = 7
+                        barBG.Visible = true
+                        local bar = Drawing.new("Line")
+                        bar.From = Vector2.new(screenPos.X-25, screenPos.Y-30)
+                        bar.To = Vector2.new(screenPos.X-25+health*50, screenPos.Y-30)
+                        bar.Color = Color3.fromRGB(255*(1-health),40+health*160,40)
+                        bar.Thickness = 5
+                        bar.Visible = true
+                        table.insert(healthDraws, {Bar = bar, BG = barBG})
+                    end
+                end
             end
         end
     end
+
+    -- Danger Radar
+    local danger = false
+    if _G.showDangerRadar and lpPos and lpPos.Magnitude > 0 then
+        for _, model in ipairs(workspace:GetDescendants()) do
+            if model:IsA("Model") and model:FindFirstChildOfClass("Humanoid") and not isPlayerModel(model) and model:FindFirstChild("HumanoidRootPart") then
+                local zPos = model.HumanoidRootPart.Position
+                local dist = (lpPos - zPos).Magnitude
+                if dist <= dangerDistance then
+                    danger = true
+                    break
+                end
+            end
+        end
+    end
+    dangerRadarText.Position = Vector2.new(Camera.ViewportSize.X/2, 60)
+    dangerRadarText.Visible = _G.showDangerRadar and danger or false
 end)
