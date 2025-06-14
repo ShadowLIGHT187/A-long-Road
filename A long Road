@@ -1353,7 +1353,7 @@ end)
 ------------------ RAYFIELD AIMBOT TAB: SILENT AIM PLAYERS/ZOMBIES ------------------
 
 -- Make a new tab for Aimbot (change icon if you want)
-local AimbotTab = Window:CreateTab("Aimbot", 4483362458)
+local Silent Aim = Window:CreateTab("Silent Aim", 4483362458)
 
 getgenv().SilentAimSettings = getgenv().SilentAimSettings or {
     Enabled = false,
@@ -1435,10 +1435,10 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- AimbotTab GUI
-AimbotTab:CreateSection("Silent Aim Settings")
+-- Silent Aim GUI
+Silent Aim:CreateSection("Silent Aim Settings")
 
-AimbotTab:CreateToggle({
+Silent Aim:CreateToggle({
     Name = "Silent Aim (Players)",
     CurrentValue = SilentAimSettings.Enabled,
     Callback = function(v)
@@ -1446,7 +1446,7 @@ AimbotTab:CreateToggle({
         if popup then popup("Silent Aim Players "..(v and "ON" or "OFF")) end
     end
 })
-AimbotTab:CreateToggle({
+Silent Aim:CreateToggle({
     Name = "Silent Aim (Zombies)",
     CurrentValue = SilentAimSettings.ZombieSilentAim,
     Callback = function(v)
@@ -1454,14 +1454,14 @@ AimbotTab:CreateToggle({
         if popup then popup("Silent Aim Zombies "..(v and "ON" or "OFF")) end
     end
 })
-AimbotTab:CreateToggle({
+Silent Aim:CreateToggle({
     Name = "Show FOV Circle",
     CurrentValue = SilentAimSettings.FOVVisible,
     Callback = function(v)
         SilentAimSettings.FOVVisible = v
     end
 })
-AimbotTab:CreateSlider({
+Silent Aim:CreateSlider({
     Name = "FOV Radius",
     Range = {40, 500},
     Increment = 1,
@@ -1472,7 +1472,7 @@ AimbotTab:CreateSlider({
     end
 })
 
-AimbotTab:CreateParagraph({
+Silent Aim:CreateParagraph({
     Title = "How it Works",
     Content = "Silent Aim makes all shots hit the nearest player or zombie in your FOV (depending on which toggles are ON). Works for most Mouse.Hit-based shooters. FOV is just visual."
 })
