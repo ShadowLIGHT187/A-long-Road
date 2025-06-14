@@ -1350,7 +1350,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
-
 ---------------------- RAYFIELD AIMBOT TAB: PLAYER & ZOMBIE AIMBOT ----------------------
 
 -- Create a new Aimbot tab if you haven't yet
@@ -1505,5 +1504,7 @@ AimbotTab:CreateParagraph({
     Title = "How it Works",
     Content = "Aimbot locks your camera smoothly to the nearest player or zombie, depending on which toggles are enabled. Adjust FOV, range, and smoothness to taste. (Works on mobile and PC!)"
 })
+
+---------------------- END RAYFIELD PLAYER+ZOMBIE AIMBOT ----------------------
 
 ---------------------- END RAYFIELD PLAYER+ZOMBIE AIMBOT ----------------------
